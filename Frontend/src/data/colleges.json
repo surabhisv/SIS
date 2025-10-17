@@ -1,0 +1,47 @@
+[
+  {
+    "id": "C001",
+    "name": "Springfield University",
+    "code": "SPU",
+    "address": "1000 University Blvd, Springfield, IL 62701",
+    "phone": "+1-555-1000",
+    "email": "info@springfield.edu",
+    "website": "www.springfield.edu",
+    "established": "1950",
+    "accreditation": "Regional Accreditation Board",
+    "totalStudents": 5000,
+    "totalFaculty": 300,
+    "adminEmail": "admin@demo.com",
+    "status": "Active"
+  },
+  {
+    "id": "C002",
+    "name": "Riverside College",
+    "code": "RVC",
+    "address": "500 River Rd, Riverside, IL 60546",
+    "phone": "+1-555-2000",
+    "email": "info@riverside.edu",
+    "website": "www.riverside.edu",
+    "established": "1965",
+    "accreditation": "Regional Accreditation Board",
+    "totalStudents": 3000,
+    "totalFaculty": 180,
+    "adminEmail": "admin2@demo.com",
+    "status": "Active"
+  },
+  {
+    "id": "C003",
+    "name": "Northfield Institute",
+    "code": "NFI",
+    "address": "200 North Ave, Northfield, IL 60093",
+    "phone": "+1-555-3000",
+    "email": "info@northfield.edu",
+    "website": "www.northfield.edu",
+    "established": "1980",
+    "accreditation": "National Accreditation Board",
+    "totalStudents": 2000,
+    "totalFaculty": 120,
+    "adminEmail": "admin3@demo.com",
+    "status": "Active"
+  }
+]
