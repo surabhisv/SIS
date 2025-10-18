@@ -1,0 +1,69 @@
+[
+  {
+    "id": "E001",
+    "studentId": "S001",
+    "courseId": "CS101",
+    "status": "Approved",
+    "requestDate": "2025-08-01",
+    "approvedDate": "2025-08-02",
+    "approvedBy": "admin@demo.com",
+    "semester": "Fall 2025",
+    "grade": null
+  },
+  {
+    "id": "E002",
+    "studentId": "S001",
+    "courseId": "CS201",
+    "status": "Approved",
+    "requestDate": "2025-08-01",
+    "approvedDate": "2025-08-02",
+    "approvedBy": "admin@demo.com",
+    "semester": "Fall 2025",
+    "grade": null
+  },
+  {
+    "id": "E003",
+    "studentId": "S002",
+    "courseId": "BUS101",
+    "status": "Approved",
+    "requestDate": "2025-08-03",
+    "approvedDate": "2025-08-04",
+    "approvedBy": "admin@demo.com",
+    "semester": "Fall 2025",
+    "grade": null
+  },
+  {
+    "id": "E004",
+    "studentId": "S003",
+    "courseId": "EE101",
+    "status": "Pending",
+    "requestDate": "2025-10-10",
+    "approvedDate": null,
+    "approvedBy": null,
+    "semester": "Fall 2025",
+    "grade": null
+  },
+  {
+    "id": "E005",
+    "studentId": "S002",
+    "courseId": "MATH201",
+    "status": "Pending",
+    "requestDate": "2025-10-12",
+    "approvedDate": null,
+    "approvedBy": null,
+    "semester": "Fall 2025",
+    "grade": null
+  },
+  {
+    "id": "E006",
+    "studentId": "S001",
+    "courseId": "EE101",
+    "status": "Rejected",
+    "requestDate": "2025-09-15",
+    "approvedDate": "2025-09-16",
+    "approvedBy": "admin@demo.com",
+    "semester": "Fall 2025",
+    "grade": null,
+    "rejectionReason": "Prerequisites not met"
+  }
+]
