@@ -1,0 +1,24 @@
+[
+  {
+    "request_id": 1,
+    "college_name": "FutureTech University",
+    "address": "90 Knowledge Road, Hyderabad, TS",
+    "logo_url": "https://example.com/logos/futuretech.png",
+    "requested_by": 4,
+    "status": "PENDING",
+    "request_date": "2025-09-15 11:00:00",
+    "approved_by": null,
+    "approval_date": null
+  },
+  {
+    "request_id": 2,
+    "college_name": "Himalayan School of Design",
+    "address": "22 Hilltop Road, Dehradun, UK",
+    "logo_url": "https://example.com/logos/himalayan.png",
+    "requested_by": 2,
+    "status": "APPROVED",
+    "request_date": "2025-07-05 10:00:00",
+    "approved_by": 1,
+    "approval_date": "2025-07-07 12:00:00"
+  }
+]

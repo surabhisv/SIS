@@ -1,0 +1,22 @@
+[
+    {
+        "dept_id": 1,
+        "dept_name": "Computer Science"
+    },
+    {
+        "dept_id": 2,
+        "dept_name": "Biotechnology"
+    },
+    {
+        "dept_id": 3,
+        "dept_name": "Business Administration"
+    },
+    {
+        "dept_id": 4,
+        "dept_name": "Mechanical Engineering"
+    },
+    {
+        "dept_id": 5,
+        "dept_name": "Electrical Engineering"
+    }
+]
