@@ -1,47 +1,29 @@
-[
-  {
-    "id": "C001",
-    "name": "Springfield University",
-    "code": "SPU",
-    "address": "1000 University Blvd, Springfield, IL 62701",
-    "phone": "+1-555-1000",
-    "email": "info@springfield.edu",
-    "website": "www.springfield.edu",
-    "established": "1950",
-    "accreditation": "Regional Accreditation Board",
-    "totalStudents": 5000,
-    "totalFaculty": 300,
-    "adminEmail": "admin@demo.com",
-    "status": "Active"
-  },
-  {
-    "id": "C002",
-    "name": "Riverside College",
-    "code": "RVC",
-    "address": "500 River Rd, Riverside, IL 60546",
-    "phone": "+1-555-2000",
-    "email": "info@riverside.edu",
-    "website": "www.riverside.edu",
-    "established": "1965",
-    "accreditation": "Regional Accreditation Board",
-    "totalStudents": 3000,
-    "totalFaculty": 180,
-    "adminEmail": "admin2@demo.com",
-    "status": "Active"
-  },
-  {
-    "id": "C003",
-    "name": "Northfield Institute",
-    "code": "NFI",
-    "address": "200 North Ave, Northfield, IL 60093",
-    "phone": "+1-555-3000",
-    "email": "info@northfield.edu",
-    "website": "www.northfield.edu",
-    "established": "1980",
-    "accreditation": "National Accreditation Board",
-    "totalStudents": 2000,
-    "totalFaculty": 120,
-    "adminEmail": "admin3@demo.com",
-    "status": "Active"
-  }
-]
+  [
+    {
+      "college_id": 1,
+      "college_name": "Tech Valley Institute of Engineering",
+      "logo_url": "https://example.com/logos/techvalley.png",
+      "address": "123 Innovation Street, Bengaluru, KA",
+      "status": "APPROVED",
+      "created_by": 3,
+      "created_at": "2025-01-10 10:00:00"
+    },
+    {
+      "college_id": 2,
+      "college_name": "Greenfield College of Science",
+      "logo_url": "https://example.com/logos/greenfield.png",
+      "address": "42 Park Avenue, Chennai, TN",
+      "status": "APPROVED",
+      "created_by": 3,
+      "created_at": "2025-02-15 11:20:00"
+    },
+    {
+      "college_id": 3,
+      "college_name": "Sunrise Management Academy",
+      "logo_url": "https://example.com/logos/sunrise.png",
+      "address": "88 Sunrise Road, Pune, MH",
+      "status": "PENDING",
+      "created_by": 4,
+      "created_at": "2025-03-05 09:15:00"
+    }
+  ]

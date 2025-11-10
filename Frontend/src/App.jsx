@@ -14,7 +14,14 @@ import StudentProfile from "./Pages/Student/StudentProfile";
 import BrowseCourses from "./Pages/Student/BrowseCourses";
 import StudentEnrollments from "./Pages/Student/StudentEnrollments";
 
-import AdminLogin from "./Pages/Admin/AdminLogin.jsx";
+//College Admin imports
+import CollegeAdminLogin from "./Pages/CollegeAdmin/CollegeAdminLogin.jsx";
+import CollegeAdminDashboard from "./Pages/CollegeAdmin/CollegeAdminDashboard.jsx";
+import CollegeAdminRequest from "./Pages/CollegeAdmin/CollegeAdminRequest.jsx";
+import ManageCourses from "./Pages/CollegeAdmin/ManageCourses.jsx";
+import AddCourse from "./Pages/CollegeAdmin/AddCourse.jsx";
+import ViewEnrollments from "./Pages/CollegeAdmin/ViewEnrollments.jsx";
+import SeatManagementPage from "./Pages/CollegeAdmin/SeatManagement.jsx";
 
 function App() {
   return (
@@ -35,8 +42,29 @@ function App() {
         <Route path="/student/courses" element={<BrowseCourses />} />
         <Route path="/student/enrollments" element={<StudentEnrollments />} />
 
-        {/* Admin pages */}
-        <Route path="/admin/Adminlogin" element={<AdminLogin />} />
+        {/* College Admin pages */}
+        <Route
+          path="/Collegeadmin/CollegeAdminlogin"
+          element={<CollegeAdminLogin />}
+        />
+        <Route
+          path="/CollegeAdmin/CollegeAdminDashboard"
+          element={<CollegeAdminDashboard />}
+        />
+        <Route
+          path="/CollegeAdmin/CollegeAdminRequest"
+          element={<CollegeAdminRequest />}
+        />
+        <Route path="/CollegeAdmin/ManageCourses" element={<ManageCourses />} />
+        <Route path="/CollegeAdmin/AddCourse" element={<AddCourse />} />
+        <Route
+          path="/CollegeAdmin/ViewEnrollments"
+          element={<ViewEnrollments />}
+        />
+        <Route
+          path="/CollegeAdmin/SeatManagement"
+          element={<SeatManagementPage />}
+        />
       </Routes>
     </BrowserRouter>
   );

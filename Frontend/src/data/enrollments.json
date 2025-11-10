@@ -1,69 +1,29 @@
 [
-  {
-    "id": "E001",
-    "studentId": "S001",
-    "courseId": "CS101",
-    "status": "Approved",
-    "requestDate": "2025-08-01",
-    "approvedDate": "2025-08-02",
-    "approvedBy": "admin@demo.com",
-    "semester": "Fall 2025",
-    "grade": null
-  },
-  {
-    "id": "E002",
-    "studentId": "S001",
-    "courseId": "CS201",
-    "status": "Approved",
-    "requestDate": "2025-08-01",
-    "approvedDate": "2025-08-02",
-    "approvedBy": "admin@demo.com",
-    "semester": "Fall 2025",
-    "grade": null
-  },
-  {
-    "id": "E003",
-    "studentId": "S002",
-    "courseId": "BUS101",
-    "status": "Approved",
-    "requestDate": "2025-08-03",
-    "approvedDate": "2025-08-04",
-    "approvedBy": "admin@demo.com",
-    "semester": "Fall 2025",
-    "grade": null
-  },
-  {
-    "id": "E004",
-    "studentId": "S003",
-    "courseId": "EE101",
-    "status": "Pending",
-    "requestDate": "2025-10-10",
-    "approvedDate": null,
-    "approvedBy": null,
-    "semester": "Fall 2025",
-    "grade": null
-  },
-  {
-    "id": "E005",
-    "studentId": "S002",
-    "courseId": "MATH201",
-    "status": "Pending",
-    "requestDate": "2025-10-12",
-    "approvedDate": null,
-    "approvedBy": null,
-    "semester": "Fall 2025",
-    "grade": null
-  },
-  {
-    "id": "E006",
-    "studentId": "S001",
-    "courseId": "EE101",
-    "status": "Rejected",
-    "requestDate": "2025-09-15",
-    "approvedDate": "2025-09-16",
-    "approvedBy": "admin@demo.com",
-    "semester": "Fall 2025",
-    "grade": null,
-    "rejectionReason": "Prerequisites not met"
-  }
+    {
+        "enrollment_id": 1,
+        "student_id": "S1001",
+        "course_id": 1,
+        "status": "APPROVED",
+        "requested_at": "2025-07-10 10:00:00",
+        "approved_by": 2,
+        "approval_date": "2025-07-12 09:00:00"
+    },
+    {
+        "enrollment_id": 2,
+        "student_id": "S1002",
+        "course_id": 3,
+        "status": "APPROVED",
+        "requested_at": "2025-08-05 09:30:00",
+        "approved_by": 3,
+        "approval_date": "2025-08-07 10:00:00"
+    },
+    {
+        "enrollment_id": 3,
+        "student_id": "S1003",
+        "course_id": 4,
+        "status": "REQUESTED",
+        "requested_at": "2025-09-01 08:15:00",
+        "approved_by": null,
+        "approval_date": null
+    }
 ]

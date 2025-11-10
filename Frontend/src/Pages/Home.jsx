@@ -6,7 +6,7 @@ export default function Home() {
     if (role === "student") {
       nav("/student/Studentlogin");
     } else {
-      nav("/admin/Adminlogin");
+      nav("/CollegeAdmin/CollegeAdminlogin");
     }
   };
   return (
