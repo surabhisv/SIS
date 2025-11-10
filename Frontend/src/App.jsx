@@ -4,9 +4,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Page components
 import Home from "./Pages/Home.jsx";
 
-import SuperAdmin from "./Pages/SuperAdmin/SuperAdmin.jsx";
-import SuperAdminPortal from "./Pages/SuperAdmin/SuperAdminPortal.jsx";
-
 import StudentRegister from "./Pages/Student/StudentRegister.jsx";
 import StudentLogin from "./Pages/Student/StudentLogin.jsx";
 import StudentDashboard from "./Pages/Student/StudentDashboard";
@@ -23,6 +20,11 @@ import AddCourse from "./Pages/CollegeAdmin/AddCourse.jsx";
 import ViewEnrollments from "./Pages/CollegeAdmin/ViewEnrollments.jsx";
 import SeatManagementPage from "./Pages/CollegeAdmin/SeatManagement.jsx";
 
+// Super Admin imports
+import SuperAdminDashboard from "./Pages/SuperAdmin/SuperAdminDashboard.jsx";
+import ManageColleges from "./Pages/SuperAdmin/ManageColleges.jsx";
+import SuperAdminLogin from "./Pages/SuperAdmin/SuperAdminLogin.jsx";
+
 function App() {
   return (
     <BrowserRouter>
@@ -30,9 +32,10 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        {/* Superadmin pages */}
-        <Route path="/superadmin" element={<SuperAdmin />} />
-        <Route path="/superadmin/portal" element={<SuperAdminPortal />} />
+        {/* Super Admin Routes */}
+        <Route path="/superadmin/login" element={<SuperAdminLogin />} />
+        <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
+        <Route path="/superadmin/colleges" element={<ManageColleges />} />
 
         {/* Student pages */}
         <Route path="/student/Studentlogin" element={<StudentLogin />} />

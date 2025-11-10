@@ -9,7 +9,7 @@ const SuperAdminLogin = () => {
   const handleLogin = (e) => {
     e.preventDefault();
     // navigation to portal page on login
-    nav("/superadmin/portal"); 
+    nav("/superadmin/dashboard");
   };
 
   return (
@@ -20,22 +20,19 @@ const SuperAdminLogin = () => {
           "url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1920')",
       }}
     >
-      
       <div className="absolute inset-0 bg-black/60"></div>
 
-      
       <div className="relative z-10 w-full max-w-sm p-8 bg-white/10 backdrop-blur-xl rounded-3xl shadow-xl flex flex-col items-center">
         <h2 className="text-3xl font-bold text-white mb-5 text-center">
           Super Admin Login
         </h2>
 
-        <form
-          onSubmit={handleLogin}
-          className="w-full flex flex-col gap-5"
-        >
+        <form onSubmit={handleLogin} className="w-full flex flex-col gap-5">
           {/* Email */}
           <div className="flex flex-col">
-            <label className="text-gray-200 mb-1 font-medium text-sm">Email</label>
+            <label className="text-gray-200 mb-1 font-medium text-sm">
+              Email
+            </label>
             <input
               type="email"
               placeholder="admin@example.com"
@@ -48,7 +45,9 @@ const SuperAdminLogin = () => {
 
           {/* Password */}
           <div className="flex flex-col">
-            <label className="text-gray-200 mb-1 font-medium text-sm">Password</label>
+            <label className="text-gray-200 mb-1 font-medium text-sm">
+              Password
+            </label>
             <input
               type="password"
               placeholder="Enter your password"
