@@ -21,15 +21,6 @@ const BrowseCourses = () => {
   }, []);
 
   useEffect(() => {
-    filterCourses();
-  }, [searchTerm, filterDepartment, courses]);
-
-  const loadCourses = () => {
-    const allCourses = dataService.getAll("courses");
-    setCourses(allCourses);
-  };
-
-  const filterCourses = () => {
     let filtered = courses;
 
     if (filterDepartment !== "All") {
@@ -37,18 +28,49 @@ const BrowseCourses = () => {
     }
 
     if (searchTerm) {
+      const lowered = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (c) =>
-          c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.instructor.toLowerCase().includes(searchTerm.toLowerCase())
+          c.name.toLowerCase().includes(lowered) ||
+          c.code.toLowerCase().includes(lowered) ||
+          c.instructor.toLowerCase().includes(lowered)
       );
     }
 
     setFilteredCourses(filtered);
+  }, [searchTerm, filterDepartment, courses]);
+
+  const loadCourses = () => {
+    const allCourses = dataService.getAll("courses");
+    const enrichedCourses = allCourses.map((course) => {
+      const enrollments = dataService.getEnrollmentsByCourse(course.id);
+      const approvedCount = enrollments.filter(
+        (enrollment) => enrollment.status === "Approved"
+      ).length;
+      const seatLimit =
+        course.seat_limit ?? course.seatLimit ?? course.capacity ?? 0;
+      const seatsAvailable = Math.max(seatLimit - approvedCount, 0);
+
+      return {
+        ...course,
+        seatLimit,
+        seatsAvailable,
+        approvedCount,
+        isFull: seatLimit > 0 ? seatsAvailable <= 0 : false,
+      };
+    });
+
+    setCourses(enrichedCourses);
   };
 
-  const departments = ["All", ...new Set(courses.map((c) => c.department))];
+  const departments = [
+    "All",
+    ...new Set(
+      courses
+        .map((c) => c.department)
+        .filter((dept) => typeof dept === "string" && dept.trim() !== "")
+    ),
+  ];
 
   const handleEnrollRequest = (course) => {
     setSelectedCourse(course);
@@ -70,7 +92,9 @@ const BrowseCourses = () => {
 
     dataService.create("enrollments", newEnrollment);
     setShowEnrollModal(false);
+    setSelectedCourse(null);
     setShowSuccess(true);
+    loadCourses();
     setTimeout(() => setShowSuccess(false), 3000);
   };
 
@@ -170,57 +194,28 @@ const BrowseCourses = () => {
                     </svg>
                     {course.schedule}
                   </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    {course.room}
-                  </div>
                 </div>
 
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-sm font-semibold text-gray-700">
                     {course.credits} Credits
                   </span>
-                  <span
-                    className={`text-xs font-semibold px-2 py-1 rounded ${
-                      course.status === "Open"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {course.enrolled}/{course.capacity} Enrolled
+                  <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-100 text-blue-800">
+                    Seats Available: {course.seatsAvailable} /{" "}
+                    {course.seatLimit}
                   </span>
                 </div>
 
                 <button
                   onClick={() => handleEnrollRequest(course)}
-                  disabled={course.status === "Full"}
+                  disabled={course.isFull}
                   className={`w-full py-2 rounded-lg font-semibold transition duration-200 ${
-                    course.status === "Full"
+                    course.isFull
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
                 >
-                  {course.status === "Full"
-                    ? "Course Full"
-                    : "Request Enrollment"}
+                  {course.isFull ? "Course Full" : "Request Enrollment"}
                 </button>
               </div>
             </div>

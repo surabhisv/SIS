@@ -9,10 +9,10 @@ import SuperAdminPortal from "./Pages/SuperAdmin/SuperAdminPortal.jsx";
 
 import StudentRegister from "./Pages/Student/StudentRegister.jsx";
 import StudentLogin from "./Pages/Student/StudentLogin.jsx";
-import StudentDashboard from "./pages/student/StudentDashboard";
-import StudentProfile from "./pages/student/StudentProfile";
-import BrowseCourses from "./pages/student/BrowseCourses";
-import StudentEnrollments from "./pages/student/StudentEnrollments";
+import StudentDashboard from "./Pages/Student/StudentDashboard";
+import StudentProfile from "./Pages/Student/StudentProfile";
+import BrowseCourses from "./Pages/Student/BrowseCourses";
+import StudentEnrollments from "./Pages/Student/StudentEnrollments";
 
 import AdminLogin from "./Pages/Admin/AdminLogin.jsx";
 

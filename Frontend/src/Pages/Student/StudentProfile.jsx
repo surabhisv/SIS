@@ -1,17 +1,40 @@
 import { useState } from "react";
 import Layout from "../../components/Layout";
 import Modal from "../../components/Modal";
-import studentsData from "../../data/students.json";
 
 const StudentProfile = () => {
-  // Mock current user - hardcoded student data
-  const currentUser = studentsData[0]; // Using first student from JSON
+  // Mock current user - based on actual database schema
+  const [currentUser, setCurrentUser] = useState({
+    student_id: "STU001",
+    fullName: "Final Test Student",
+    email: "final.test.student@gmail.com",
+    phone: "5555555555",
+    address: "1 Final Test Rd",
+    college_id: 1,
+    collegeName: "Engineering College", // Will be fetched from colleges table
+    dept_id: 1,
+    deptName: "Computer Science", // Will be fetched from department table
+    approval_status: "APPROVED",
+    created_at: "2024-01-15",
+  });
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    ...currentUser,
+    fullName: currentUser.fullName,
+    phone: currentUser.phone,
+    address: currentUser.address,
   });
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleEditClick = () => {
+    // Reset form data to current user values when opening modal
+    setFormData({
+      fullName: currentUser.fullName,
+      phone: currentUser.phone,
+      address: currentUser.address,
+    });
+    setIsEditing(true);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -20,7 +43,15 @@ const StudentProfile = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Just show success message - no actual update without backend
+    // TODO: Make API call to update student profile
+    // Allow student to edit basic contact information
+    setCurrentUser((prev) => ({
+      ...prev,
+      fullName: formData.fullName,
+      phone: formData.phone,
+      address: formData.address,
+    }));
+    console.log("Updated data:", formData);
     setIsEditing(false);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
@@ -38,7 +69,7 @@ const StudentProfile = () => {
             </p>
           </div>
           <button
-            onClick={() => setIsEditing(true)}
+            onClick={handleEditClick}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition duration-200"
           >
             <svg
@@ -88,15 +119,20 @@ const StudentProfile = () => {
               </div>
               <div className="ml-6">
                 <h2 className="text-2xl font-bold text-gray-800">
-                  {currentUser.firstName} {currentUser.lastName}
+                  {currentUser.fullName}
                 </h2>
-                <p className="text-gray-600">{currentUser.major}</p>
+                <p className="text-gray-600">{currentUser.deptName}</p>
                 <div className="flex items-center space-x-4 mt-2">
-                  <span className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {currentUser.year}
-                  </span>
-                  <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {currentUser.status}
+                  <span
+                    className={`text-sm font-semibold px-3 py-1 rounded-full ${
+                      currentUser.approval_status === "APPROVED"
+                        ? "bg-green-100 text-green-800"
+                        : currentUser.approval_status === "PENDING"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {currentUser.approval_status}
                   </span>
                 </div>
               </div>
@@ -112,7 +148,13 @@ const StudentProfile = () => {
                   <div>
                     <label className="text-sm text-gray-500">Student ID</label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.id}
+                      {currentUser.student_id}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Full Name</label>
+                    <p className="text-gray-800 font-medium">
+                      {currentUser.fullName}
                     </p>
                   </div>
                   <div>
@@ -128,17 +170,9 @@ const StudentProfile = () => {
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-500">
-                      Date of Birth
-                    </label>
+                    <label className="text-sm text-gray-500">Address</label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.dateOfBirth}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Gender</label>
-                    <p className="text-gray-800 font-medium">
-                      {currentUser.gender}
+                      {currentUser.address}
                     </p>
                   </div>
                 </div>
@@ -150,72 +184,33 @@ const StudentProfile = () => {
                 </h3>
                 <div className="space-y-3">
                   <div>
+                    <label className="text-sm text-gray-500">College</label>
+                    <p className="text-gray-800 font-medium">
+                      {currentUser.collegeName}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-500">Department</label>
+                    <p className="text-gray-800 font-medium">
+                      {currentUser.deptName}
+                    </p>
+                  </div>
+                  <div>
                     <label className="text-sm text-gray-500">
-                      Enrollment Date
+                      Registration Date
                     </label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.enrollmentDate}
+                      {new Date(currentUser.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-500">Major</label>
+                    <label className="text-sm text-gray-500">
+                      Approval Status
+                    </label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.major}
+                      {currentUser.approval_status}
                     </p>
                   </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Year</label>
-                    <p className="text-gray-800 font-medium">
-                      {currentUser.year}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">GPA</label>
-                    <p className="text-gray-800 font-medium">
-                      {currentUser.gpa}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-500">Status</label>
-                    <p className="text-gray-800 font-medium">
-                      {currentUser.status}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Address Information */}
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Address Information
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm text-gray-500">
-                    Street Address
-                  </label>
-                  <p className="text-gray-800 font-medium">
-                    {currentUser.address}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500">City</label>
-                  <p className="text-gray-800 font-medium">
-                    {currentUser.city}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500">State</label>
-                  <p className="text-gray-800 font-medium">
-                    {currentUser.state}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm text-gray-500">Zip Code</label>
-                  <p className="text-gray-800 font-medium">
-                    {currentUser.zipCode}
-                  </p>
                 </div>
               </div>
             </div>
@@ -228,111 +223,59 @@ const StudentProfile = () => {
         isOpen={isEditing}
         onClose={() => setIsEditing(false)}
         title="Edit Profile"
-        size="lg"
+        size="md"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-800">
+                <strong>Note:</strong> You can update your name, phone number,
+                and address here. Other changes must go through your college
+                administrator.
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                First Name
+                Full Name
               </label>
               <input
                 type="text"
-                name="firstName"
-                value={formData.firstName}
+                name="fullName"
+                value={formData.fullName}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your full name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name
-              </label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone
+                Phone Number
               </label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your phone number"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Date of Birth
+                Address
               </label>
-              <input
-                type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Street Address
-              </label>
-              <input
-                type="text"
+              <textarea
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                City
-              </label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                State
-              </label>
-              <input
-                type="text"
-                name="state"
-                value={formData.state}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Zip Code
-              </label>
-              <input
-                type="text"
-                name="zipCode"
-                value={formData.zipCode}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Enter your complete address"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               />
             </div>

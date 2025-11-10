@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import dataService from "../../services/dataService";
 
 export default function StudentRegister() {
   const nav = useNavigate();
@@ -7,19 +8,48 @@ export default function StudentRegister() {
 
   // Get college from login
   const collegeFromLogin = location.state?.college || "";
-  const [college] = useState(collegeFromLogin);
+  const [college, setCollege] = useState(collegeFromLogin);
+  const [collegeOptions, setCollegeOptions] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [department, setDepartment] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    const colleges = dataService.getAll("colleges");
+    const courses = dataService.getAll("courses");
+
+    setCollegeOptions(colleges);
+    const uniqueDepartments = [
+      ...new Set(
+        courses
+          .map((course) => course.department)
+          .filter((dept) => typeof dept === "string" && dept.trim() !== "")
+      ),
+    ];
+    setDepartmentOptions(uniqueDepartments);
+  }, []);
 
   const handleRegister = (e) => {
     e.preventDefault();
 
     //check for empty fields and password match
-    if (!name || !email || !password || !confirmPassword) {
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !phone ||
+      !address ||
+      !department ||
+      (!college && !collegeFromLogin)
+    ) {
       setError("Please fill in all fields.");
       return;
     }
@@ -30,6 +60,26 @@ export default function StudentRegister() {
 
     setError("");
     setSuccess(true);
+
+    // Payload includes both user and student details - ready for backend integration
+    const selectedCollegeId = college || collegeFromLogin;
+    const registrationPayload = {
+      user: {
+        fullName: name,
+        email,
+        password,
+        role: "STUDENT",
+        collegeId: selectedCollegeId || null,
+      },
+      student: {
+        phone,
+        address,
+        deptName: department,
+        collegeId: selectedCollegeId || null,
+      },
+    };
+
+    console.log("Registration payload", registrationPayload);
     setTimeout(() => {
       nav("/student/waiting-approval");
     }, 2000);
@@ -94,13 +144,63 @@ export default function StudentRegister() {
               className="w-full border border-gray-300 rounded-lg px-4 py-2.5 mb-4 focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm"
             />
 
-            {/* College */}
+            {/* Phone */}
             <input
-              type="text"
-              value={college}
-              readOnly
-              className="w-full border border-gray-300 bg-gray-100 text-gray-700 rounded-lg px-4 py-2.5 mb-4 cursor-not-allowed text-sm"
+              type="tel"
+              placeholder="Phone Number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 mb-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm"
             />
+
+            {/* Address */}
+            <textarea
+              placeholder="Address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              rows={3}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 mb-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm"
+            />
+
+            {/* Department */}
+            <select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2.5 mb-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm"
+            >
+              <option value="">Select Department</option>
+              {departmentOptions.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+
+            {/* College */}
+            {collegeFromLogin ? (
+              <input
+                type="text"
+                value={collegeFromLogin}
+                readOnly
+                className="w-full border border-gray-300 bg-gray-100 text-gray-700 rounded-lg px-4 py-2.5 mb-4 cursor-not-allowed text-sm"
+              />
+            ) : (
+              <select
+                value={college}
+                onChange={(e) => setCollege(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2.5 mb-4 focus:ring-2 focus:ring-indigo-400 focus:outline-none text-sm"
+              >
+                <option value="">Select College</option>
+                {collegeOptions.map((option) => (
+                  <option
+                    key={option.id || option.college_id}
+                    value={option.id || option.college_id}
+                  >
+                    {option.college_name || option.name || option}
+                  </option>
+                ))}
+              </select>
+            )}
 
             {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
 
