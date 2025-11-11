@@ -5,7 +5,7 @@ import dataService from "../../services/dataService";
 
 const StudentEnrollments = () => {
   // Mock current user
-  const currentUser = { id: "S001", studentId: "S001" };
+  const currentUser = { id: "S1001", studentId: "S1001" };
 
   const [enrollments, setEnrollments] = useState([]);
 
@@ -17,62 +17,87 @@ const StudentEnrollments = () => {
     const myEnrollments = dataService.getEnrollmentsByStudent(currentUser.id);
     const allCourses = dataService.getAll("courses");
 
+    console.log("My enrollments:", myEnrollments); // Debug log
+    console.log("All courses:", allCourses); // Debug log
+
     const enrichedEnrollments = myEnrollments.map((e) => {
-      const course = allCourses.find((c) => c.id === e.courseId);
+      const course = allCourses.find(
+        (c) => (c.course_id || c.id) === (e.course_id || e.courseId)
+      );
+      console.log(`Enrollment ${e.enrollment_id}: course found:`, course); // Debug log
       return { ...e, course };
     });
 
+    console.log("Enriched enrollments:", enrichedEnrollments); // Debug log
     setEnrollments(enrichedEnrollments);
   };
 
   const getStatusBadge = (status) => {
     const colors = {
+      REQUESTED: "bg-yellow-100 text-yellow-800",
       Pending: "bg-yellow-100 text-yellow-800",
+      APPROVED: "bg-green-100 text-green-800",
       Approved: "bg-green-100 text-green-800",
+      REJECTED: "bg-red-100 text-red-800",
       Rejected: "bg-red-100 text-red-800",
     };
-    return `px-3 py-1 rounded-full text-sm font-semibold ${colors[status]}`;
+    return `px-3 py-1 rounded-full text-sm font-semibold ${
+      colors[status] || "bg-gray-100 text-gray-800"
+    }`;
   };
 
   const columns = [
     {
-      header: "Course Code",
+      header: "Course ID",
       accessor: "course",
-      render: (row) => row.course?.code,
+      render: (row) => row.course?.course_id || row.course?.id || "N/A",
     },
     {
       header: "Course Name",
       accessor: "course",
-      render: (row) => row.course?.name,
+      render: (row) => row.course?.course_name || row.course?.name || "N/A",
     },
     {
-      header: "Instructor",
+      header: "Description",
       accessor: "course",
-      render: (row) => row.course?.instructor,
+      render: (row) => {
+        const desc = row.course?.description || "N/A";
+        return desc.length > 50 ? desc.substring(0, 50) + "..." : desc;
+      },
     },
     {
       header: "Credits",
       accessor: "course",
-      render: (row) => row.course?.credits,
+      render: (row) => row.course?.credits || "N/A",
     },
     {
       header: "Request Date",
-      accessor: "requestDate",
+      accessor: "requested_at",
+      render: (row) =>
+        row.requested_at
+          ? new Date(row.requested_at).toLocaleDateString()
+          : "N/A",
     },
     {
       header: "Status",
       accessor: "status",
       render: (row) => (
-        <span className={getStatusBadge(row.status)}>{row.status}</span>
+        <span className={getStatusBadge(row.status)}>{row.status || "UNKNOWN"}</span>
       ),
     },
   ];
 
   const stats = {
     total: enrollments.length,
-    approved: enrollments.filter((e) => e.status === "Approved").length,
-    pending: enrollments.filter((e) => e.status === "Pending").length,
-    rejected: enrollments.filter((e) => e.status === "Rejected").length,
+    approved: enrollments.filter(
+      (e) => e.status === "Approved" || e.status === "APPROVED"
+    ).length,
+    pending: enrollments.filter(
+      (e) => e.status === "Pending" || e.status === "REQUESTED"
+    ).length,
+    rejected: enrollments.filter(
+      (e) => e.status === "Rejected" || e.status === "REJECTED"
+    ).length,
   };
 
   return (
@@ -198,7 +223,31 @@ const StudentEnrollments = () => {
           <h2 className="text-xl font-bold text-gray-800 mb-4">
             Enrollment History
           </h2>
-          <Table columns={columns} data={enrollments} />
+          {enrollments.length === 0 ? (
+            <div className="text-center py-12">
+              <svg
+                className="mx-auto h-12 w-12 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No enrollment history
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                You haven't enrolled in any courses yet.
+              </p>
+            </div>
+          ) : (
+            <Table columns={columns} data={enrollments} />
+          )}
         </div>
       </div>
     </Layout>

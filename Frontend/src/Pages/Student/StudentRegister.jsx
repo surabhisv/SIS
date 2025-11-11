@@ -23,17 +23,13 @@ export default function StudentRegister() {
 
   useEffect(() => {
     const colleges = dataService.getAll("colleges");
-    const courses = dataService.getAll("courses");
+    const departments = dataService.getAll("departments");
 
     setCollegeOptions(colleges);
-    const uniqueDepartments = [
-      ...new Set(
-        courses
-          .map((course) => course.department)
-          .filter((dept) => typeof dept === "string" && dept.trim() !== "")
-      ),
-    ];
-    setDepartmentOptions(uniqueDepartments);
+    // Use department table data instead of courses
+    if (departments && departments.length > 0) {
+      setDepartmentOptions(departments);
+    }
   }, []);
 
   const handleRegister = (e) => {
@@ -65,17 +61,19 @@ export default function StudentRegister() {
     const selectedCollegeId = college || collegeFromLogin;
     const registrationPayload = {
       user: {
-        fullName: name,
+        full_name: name,
         email,
         password,
         role: "STUDENT",
-        collegeId: selectedCollegeId || null,
+        college_id: selectedCollegeId || null,
+        status: "PENDING",
       },
       student: {
         phone,
         address,
-        deptName: department,
-        collegeId: selectedCollegeId || null,
+        dept_id: department,
+        college_id: selectedCollegeId || null,
+        approval_status: "PENDING",
       },
     };
 
@@ -170,8 +168,8 @@ export default function StudentRegister() {
             >
               <option value="">Select Department</option>
               {departmentOptions.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
+                <option key={dept.dept_id || dept} value={dept.dept_id || dept}>
+                  {dept.dept_name || dept}
                 </option>
               ))}
             </select>

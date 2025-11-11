@@ -34,9 +34,10 @@ const Table = ({ columns, data, onRowClick }) => {
                 {columns.map((column, colIndex) => (
                   <td
                     key={colIndex}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                    className="px-6 py-4 text-sm text-gray-900"
+                    style={{ maxWidth: '300px' }}
                   >
-                    {column.render ? column.render(row) : row[column.accessor]}
+                    {column.render ? column.render(row) : (row[column.accessor] || "N/A")}
                   </td>
                 ))}
               </tr>

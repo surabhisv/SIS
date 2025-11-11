@@ -75,16 +75,22 @@ class DataService {
   }
 
   getEnrollmentsByStudent(studentId) {
-    return this.getAll("enrollments").filter((e) => e.studentId === studentId);
+    return this.getAll("enrollments").filter(
+      (e) => (e.student_id || e.studentId) === studentId
+    );
   }
-  
-  getCourseById(courseId) {
-  return this.getAll("courses").find(c => c.id === courseId) || null;
-}
 
+  getCourseById(courseId) {
+    return (
+      this.getAll("courses").find((c) => (c.course_id || c.id) === courseId) ||
+      null
+    );
+  }
 
   getEnrollmentsByCourse(courseId) {
-    return this.getAll("enrollments").filter((e) => e.courseId === courseId);
+    return this.getAll("enrollments").filter(
+      (e) => (e.course_id || e.courseId) === courseId
+    );
   }
 
   getPendingEnrollments(collegeId = null) {

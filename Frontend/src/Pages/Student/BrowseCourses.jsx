@@ -6,7 +6,7 @@ import dataService from "../../services/dataService";
 
 const BrowseCourses = () => {
   // Mock current user
-  const currentUser = { id: "S001", studentId: "S001" };
+  const currentUser = { id: "S1001", studentId: "S1001" };
 
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
@@ -24,16 +24,16 @@ const BrowseCourses = () => {
     let filtered = courses;
 
     if (filterDepartment !== "All") {
-      filtered = filtered.filter((c) => c.department === filterDepartment);
+      filtered = filtered.filter((c) => c.dept_id == filterDepartment);
     }
 
     if (searchTerm) {
       const lowered = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (c) =>
-          c.name.toLowerCase().includes(lowered) ||
-          c.code.toLowerCase().includes(lowered) ||
-          c.instructor.toLowerCase().includes(lowered)
+          (c.course_name && c.course_name.toLowerCase().includes(lowered)) ||
+          (c.description && c.description.toLowerCase().includes(lowered)) ||
+          (c.course_id && c.course_id.toString().includes(lowered))
       );
     }
 
@@ -42,13 +42,17 @@ const BrowseCourses = () => {
 
   const loadCourses = () => {
     const allCourses = dataService.getAll("courses");
+    console.log("Loaded courses:", allCourses); // Debug log
+    
     const enrichedCourses = allCourses.map((course) => {
-      const enrollments = dataService.getEnrollmentsByCourse(course.id);
+      const enrollments = dataService.getEnrollmentsByCourse(
+        course.course_id || course.id
+      );
       const approvedCount = enrollments.filter(
-        (enrollment) => enrollment.status === "Approved"
+        (enrollment) =>
+          enrollment.status === "Approved" || enrollment.status === "APPROVED"
       ).length;
-      const seatLimit =
-        course.seat_limit ?? course.seatLimit ?? course.capacity ?? 0;
+      const seatLimit = course.seat_limit ?? 0;
       const seatsAvailable = Math.max(seatLimit - approvedCount, 0);
 
       return {
@@ -60,16 +64,13 @@ const BrowseCourses = () => {
       };
     });
 
+    console.log("Enriched courses:", enrichedCourses); // Debug log
     setCourses(enrichedCourses);
   };
 
   const departments = [
     "All",
-    ...new Set(
-      courses
-        .map((c) => c.department)
-        .filter((dept) => typeof dept === "string" && dept.trim() !== "")
-    ),
+    ...new Set(courses.map((c) => c.dept_id).filter((dept) => dept != null)),
   ];
 
   const handleEnrollRequest = (course) => {
@@ -79,15 +80,13 @@ const BrowseCourses = () => {
 
   const confirmEnrollment = () => {
     const newEnrollment = {
-      id: `E${Date.now()}`,
-      studentId: currentUser.id,
-      courseId: selectedCourse.id,
-      status: "Pending",
-      requestDate: new Date().toISOString().split("T")[0],
-      approvedDate: null,
-      approvedBy: null,
-      semester: selectedCourse.semester,
-      grade: null,
+      enrollment_id: Date.now(),
+      student_id: currentUser.studentId,
+      course_id: selectedCourse.course_id || selectedCourse.id,
+      status: "REQUESTED",
+      requested_at: new Date().toISOString(),
+      approved_by: null,
+      approval_date: null,
     };
 
     dataService.create("enrollments", newEnrollment);
@@ -146,19 +145,23 @@ const BrowseCourses = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
             <div
-              key={course.id}
+              key={course.course_id || course.id}
               className="bg-white rounded-xl shadow-md hover:shadow-lg transition duration-200 overflow-hidden"
             >
               <div className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-4">
-                <h3 className="text-lg font-bold">{course.code}</h3>
-                <p className="text-blue-100 text-sm">{course.department}</p>
+                <h3 className="text-lg font-bold">
+                  Course ID: {course.course_id || course.id || "N/A"}
+                </h3>
+                <p className="text-blue-100 text-sm">
+                  Dept ID: {course.dept_id || "N/A"}
+                </p>
               </div>
               <div className="p-4">
                 <h4 className="font-semibold text-gray-800 mb-2">
-                  {course.name}
+                  {course.course_name || course.name || "Unnamed Course"}
                 </h4>
                 <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                  {course.description}
+                  {course.description || "No description available"}
                 </p>
 
                 <div className="space-y-2 mb-4">
@@ -173,36 +176,22 @@ const BrowseCourses = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    {course.instructor}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    {course.schedule}
+                    {course.start_date && course.end_date
+                      ? `${course.start_date} - ${course.end_date}`
+                      : "Dates TBD"}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-sm font-semibold text-gray-700">
-                    {course.credits} Credits
+                    {course.credits || 0} Credits
                   </span>
                   <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-100 text-blue-800">
-                    Seats Available: {course.seatsAvailable} /{" "}
-                    {course.seatLimit}
+                    Seats Available: {course.seatsAvailable || 0} /{" "}
+                    {course.seatLimit || 0}
                   </span>
                 </div>
 
@@ -257,9 +246,11 @@ const BrowseCourses = () => {
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {selectedCourse.name}
+                {selectedCourse.course_name || selectedCourse.name || "Course"}
               </h3>
-              <p className="text-gray-600">{selectedCourse.code}</p>
+              <p className="text-gray-600">
+                Course ID: {selectedCourse.course_id || selectedCourse.id || "N/A"}
+              </p>
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -268,16 +259,20 @@ const BrowseCourses = () => {
               </h4>
               <ul className="space-y-1 text-sm text-gray-700">
                 <li>
-                  <strong>Instructor:</strong> {selectedCourse.instructor}
+                  <strong>Description:</strong>{" "}
+                  {selectedCourse.description || "N/A"}
                 </li>
                 <li>
-                  <strong>Schedule:</strong> {selectedCourse.schedule}
+                  <strong>Duration:</strong>{" "}
+                  {selectedCourse.start_date && selectedCourse.end_date
+                    ? `${selectedCourse.start_date} - ${selectedCourse.end_date}`
+                    : "Dates TBD"}
                 </li>
                 <li>
-                  <strong>Credits:</strong> {selectedCourse.credits}
+                  <strong>Credits:</strong> {selectedCourse.credits || "N/A"}
                 </li>
                 <li>
-                  <strong>Room:</strong> {selectedCourse.room}
+                  <strong>Department ID:</strong> {selectedCourse.dept_id || "N/A"}
                 </li>
               </ul>
             </div>

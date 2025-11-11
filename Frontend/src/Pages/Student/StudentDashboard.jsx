@@ -5,9 +5,8 @@ import dataService from "../../services/dataService";
 const StudentDashboard = () => {
   // Mock current user - hardcoded student data
   const currentUser = {
-    id: "S001",
-    firstName: "Alice",
-    gpa: 3.7,
+    id: "S1001",
+    fullName: "Sneha Rao",
   };
 
   const [enrollments, setEnrollments] = useState([]);
@@ -22,9 +21,11 @@ const StudentDashboard = () => {
     const allCourses = dataService.getAll("courses");
 
     const enrolledCourses = allEnrollments
-      .filter((e) => e.status === "Approved")
+      .filter((e) => e.status === "APPROVED" || e.status === "Approved")
       .map((e) => {
-        const course = allCourses.find((c) => c.id === e.courseId);
+        const course = allCourses.find(
+          (c) => (c.course_id || c.id) === (e.course_id || e.courseId)
+        );
         return { ...e, course };
       });
 
@@ -45,15 +46,9 @@ const StudentDashboard = () => {
       icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
       color: "bg-green-500",
     },
-    // {
-    //   title: "GPA",
-    //   value: currentUser.gpa || "N/A",
-    //   icon: "M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z",
-    //   color: "bg-yellow-500",
-    // },
     {
       title: "Available Courses",
-      value: courses.filter((c) => c.status === "Open").length,
+      value: courses.length,
       icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
       color: "bg-purple-500",
     },
@@ -65,7 +60,7 @@ const StudentDashboard = () => {
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl shadow-lg p-8">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {currentUser.firstName}!
+            Welcome back, {currentUser.fullName}!
           </h1>
           <p className="text-blue-100">
             Here's what's happening with your academic journey today.
@@ -136,25 +131,29 @@ const StudentDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {enrollments.slice(0, 4).map((enrollment) => (
                 <div
-                  key={enrollment.id}
+                  key={enrollment.enrollment_id || enrollment.id}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200"
                 >
                   <h3 className="font-semibold text-lg text-gray-800">
-                    {enrollment.course?.name}
+                    {enrollment.course?.course_name || "Course Name"}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    {enrollment.course?.code}
+                    Course ID: {enrollment.course?.course_id || "N/A"}
                   </p>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm text-gray-500">
-                      {enrollment.course?.instructor}
+                    <span className="text-sm text-gray-500 line-clamp-2">
+                      {enrollment.course?.description ||
+                        "No description available"}
                     </span>
-                    <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                      {enrollment.course?.credits} Credits
+                    <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded whitespace-nowrap ml-2">
+                      {enrollment.course?.credits || 0} Credits
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    {enrollment.course?.schedule}
+                    {enrollment.course?.start_date &&
+                    enrollment.course?.end_date
+                      ? `${enrollment.course.start_date} - ${enrollment.course.end_date}`
+                      : "Schedule TBD"}
                   </p>
                 </div>
               ))}
