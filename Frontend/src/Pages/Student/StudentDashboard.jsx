@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
 import dataService from "../../services/dataService";
 
@@ -12,11 +13,7 @@ const StudentDashboard = () => {
   const [enrollments, setEnrollments] = useState([]);
   const [courses, setCourses] = useState([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = () => {
+  const loadData = useCallback(() => {
     const allEnrollments = dataService.getEnrollmentsByStudent(currentUser.id);
     const allCourses = dataService.getAll("courses");
 
@@ -31,7 +28,11 @@ const StudentDashboard = () => {
 
     setEnrollments(enrolledCourses);
     setCourses(allCourses);
-  };
+  }, [currentUser.id]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const stats = [
     {
@@ -55,7 +56,7 @@ const StudentDashboard = () => {
   ];
 
   return (
-    <Layout>
+    <Layout userName={currentUser.fullName}>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl shadow-lg p-8">
@@ -163,8 +164,8 @@ const StudentDashboard = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <a
-            href="/student/courses"
+          <Link
+            to="/student/courses"
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 group"
           >
             <div className="flex items-center space-x-4">
@@ -188,10 +189,10 @@ const StudentDashboard = () => {
                 <p className="text-sm text-gray-500">Find new courses</p>
               </div>
             </div>
-          </a>
+          </Link>
 
-          <a
-            href="/student/profile"
+          <Link
+            to="/student/profile"
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 group"
           >
             <div className="flex items-center space-x-4">
@@ -215,10 +216,10 @@ const StudentDashboard = () => {
                 <p className="text-sm text-gray-500">View and edit profile</p>
               </div>
             </div>
-          </a>
+          </Link>
 
-          <a
-            href="/student/enrollments"
+          <Link
+            to="/student/enrollments"
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200 group"
           >
             <div className="flex items-center space-x-4">
@@ -242,7 +243,7 @@ const StudentDashboard = () => {
                 <p className="text-sm text-gray-500">Track your requests</p>
               </div>
             </div>
-          </a>
+          </Link>
         </div>
       </div>
     </Layout>

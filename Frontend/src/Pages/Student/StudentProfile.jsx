@@ -58,7 +58,7 @@ const StudentProfile = () => {
   };
 
   return (
-    <Layout>
+    <Layout userName={currentUser.fullName}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">

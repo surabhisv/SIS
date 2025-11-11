@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
 
 const SuperAdminDashboard = () => {
@@ -56,11 +57,12 @@ const SuperAdminDashboard = () => {
   return (
     <Layout role="superadmin" userName="Super Admin">
       <div className="space-y-6">
-
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-xl shadow-lg p-8">
           <h1 className="text-3xl font-bold mb-2">Super Admin Dashboard</h1>
-          <p className="text-purple-100">System-wide administration and management</p>
+          <p className="text-purple-100">
+            System-wide administration and management
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -69,8 +71,12 @@ const SuperAdminDashboard = () => {
             <div key={index} className="bg-white rounded-xl shadow-md p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-500 text-sm font-medium">{stat.title}</p>
-                  <p className="text-3xl font-bold text-gray-800 mt-2">{stat.value}</p>
+                  <p className="text-gray-500 text-sm font-medium">
+                    {stat.title}
+                  </p>
+                  <p className="text-3xl font-bold text-gray-800 mt-2">
+                    {stat.value}
+                  </p>
                 </div>
                 <div className={`${stat.color} rounded-lg p-3`}>
                   <svg
@@ -94,8 +100,8 @@ const SuperAdminDashboard = () => {
 
         {/* Manage Colleges */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-          <a
-            href="/superadmin/colleges"
+          <Link
+            to="/superadmin/colleges"
             className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition duration-200"
           >
             <div className="flex items-center space-x-4">
@@ -116,10 +122,12 @@ const SuperAdminDashboard = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-800">Manage Colleges</h3>
-                <p className="text-sm text-gray-500">Review and approve colleges</p>
+                <p className="text-sm text-gray-500">
+                  Review and approve colleges
+                </p>
               </div>
             </div>
-          </a>
+          </Link>
         </div>
       </div>
     </Layout>

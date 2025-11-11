@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function CollegeAdminLayout({
   children,
@@ -74,14 +73,19 @@ export default function CollegeAdminLayout({
         {/* Navigation Links */}
         <nav className="flex-1 p-4 space-y-2">
           {navigationItems.map((item) => (
-            <a
+            <NavLink
               key={item.id}
-              href={item.link}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                activePage === item.id
-                  ? "bg-white text-indigo-600 shadow-lg"
-                  : "text-indigo-100 hover:bg-indigo-700"
-              }`}
+              to={item.link}
+              className={({ isActive }) => {
+                const isCurrent = activePage
+                  ? activePage === item.id
+                  : isActive;
+                const baseClasses =
+                  "w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200";
+                return isCurrent
+                  ? `${baseClasses} bg-white text-indigo-600 shadow-lg`
+                  : `${baseClasses} text-indigo-100 hover:bg-indigo-700`;
+              }}
             >
               <svg
                 className="w-5 h-5"
@@ -97,7 +101,7 @@ export default function CollegeAdminLayout({
                 />
               </svg>
               <span className="font-medium text-sm">{item.label}</span>
-            </a>
+            </NavLink>
           ))}
         </nav>
 

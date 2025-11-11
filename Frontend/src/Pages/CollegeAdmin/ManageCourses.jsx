@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import CollegeAdminLayout from "../../components/CollegeAdminLayout";
 import coursesData from "../../data/courses.json";
 import departmentsData from "../../data/departments.json";
@@ -20,60 +21,68 @@ export default function ManageCourses() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState(null);
 
-  useEffect(() => {
-    loadCourses();
-  }, []);
-
-  useEffect(() => {
-    filterCourses();
-  }, [searchTerm, selectedDepartment, courses]);
-
-  const loadCourses = () => {
+  const loadCourses = useCallback(() => {
     try {
       // Get courses for the current college
-      const collegeCourses = coursesData.filter(c => c.college_id === currentUser.college_id);
+      const collegeCourses = coursesData.filter(
+        (c) => c.college_id === currentUser.college_id
+      );
       setCourses(collegeCourses);
 
       // Get unique departments for this college's courses
-      const deptIds = [...new Set(collegeCourses.map(c => c.dept_id))];
-      const uniqueDepts = departmentsData.filter(d => deptIds.includes(d.dept_id));
+      const deptIds = [...new Set(collegeCourses.map((c) => c.dept_id))];
+      const uniqueDepts = departmentsData.filter((d) =>
+        deptIds.includes(d.dept_id)
+      );
       setDepartments(uniqueDepts);
     } catch (error) {
       console.error("Error loading courses:", error);
     }
-  };
+  }, [currentUser.college_id]);
 
-  const filterCourses = () => {
+  const filterCourses = useCallback(() => {
     let filtered = [...courses];
 
     if (searchTerm) {
       filtered = filtered.filter(
-        c =>
+        (c) =>
           c.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           c.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (selectedDepartment !== "all") {
-      filtered = filtered.filter(c => c.dept_id === parseInt(selectedDepartment));
+      filtered = filtered.filter(
+        (c) => c.dept_id === parseInt(selectedDepartment)
+      );
     }
 
     setFilteredCourses(filtered);
-  };
+  }, [courses, searchTerm, selectedDepartment]);
 
-  const handleDelete = course => {
+  useEffect(() => {
+    loadCourses();
+  }, [loadCourses]);
+
+  useEffect(() => {
+    filterCourses();
+  }, [filterCourses]);
+
+  const handleDelete = (course) => {
     setCourseToDelete(course);
     setShowDeleteModal(true);
   };
 
   const confirmDelete = () => {
-    setCourses(courses.filter(c => c.course_id !== courseToDelete.course_id));
+    setCourses(courses.filter((c) => c.course_id !== courseToDelete.course_id));
     setShowDeleteModal(false);
     setCourseToDelete(null);
   };
 
   const getEnrolledCount = (courseId) => {
-    return enrollmentsData.filter(e => e.course_id === courseId && e.status === "APPROVED").length;
+    return enrollmentsData.filter(
+      (e) => e.course_id === courseId && e.status === "APPROVED"
+    ).length;
   };
 
   const getStatusColor = () => {
@@ -85,13 +94,17 @@ export default function ManageCourses() {
   };
 
   const getDepartmentName = (deptId) => {
-    const dept = departmentsData.find(d => d.dept_id === deptId);
+    const dept = departmentsData.find((d) => d.dept_id === deptId);
     return dept ? dept.dept_name : "N/A";
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   return (
@@ -100,17 +113,29 @@ export default function ManageCourses() {
       <div className="bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Manage Courses</h2>
-          <p className="text-sm text-gray-500 mt-1">View, edit, and manage all course offerings</p>
+          <p className="text-sm text-gray-500 mt-1">
+            View, edit, and manage all course offerings
+          </p>
         </div>
-        <a
-          href="/CollegeAdmin/AddCourse"
+        <Link
+          to="/CollegeAdmin/AddCourse"
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
           </svg>
           <span>Add Course</span>
-        </a>
+        </Link>
       </div>
 
       <div className="p-8">
@@ -118,8 +143,18 @@ export default function ManageCourses() {
         <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
-              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
               <input
                 type="text"
@@ -135,8 +170,10 @@ export default function ManageCourses() {
               className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="all">All Departments</option>
-              {departments.map(dept => (
-                <option key={dept.dept_id} value={dept.dept_id}>{dept.dept_name}</option>
+              {departments.map((dept) => (
+                <option key={dept.dept_id} value={dept.dept_id}>
+                  {dept.dept_name}
+                </option>
               ))}
             </select>
           </div>
@@ -146,17 +183,24 @@ export default function ManageCourses() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-indigo-500">
             <p className="text-sm text-gray-500">Total Courses</p>
-            <p className="text-2xl font-bold text-gray-800">{filteredCourses.length}</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {filteredCourses.length}
+            </p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500">
             <p className="text-sm text-gray-500">Total Enrollments</p>
             <p className="text-2xl font-bold text-gray-800">
-              {filteredCourses.reduce((acc, c) => acc + getEnrolledCount(c.course_id), 0)}
+              {filteredCourses.reduce(
+                (acc, c) => acc + getEnrolledCount(c.course_id),
+                0
+              )}
             </p>
           </div>
           <div className="bg-white rounded-xl shadow-sm p-4 border-l-4 border-purple-500">
             <p className="text-sm text-gray-500">Departments</p>
-            <p className="text-2xl font-bold text-gray-800">{departments.length}</p>
+            <p className="text-2xl font-bold text-gray-800">
+              {departments.length}
+            </p>
           </div>
         </div>
 
@@ -167,28 +211,51 @@ export default function ManageCourses() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Course Name</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Department</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Credits</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Enrolled</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Duration</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Course Name
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Department
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Credits
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Enrolled
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Duration
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredCourses.map(course => {
+                  {filteredCourses.map((course) => {
                     const enrolled = getEnrolledCount(course.course_id);
                     return (
-                      <tr key={course.course_id} className="hover:bg-gray-50 transition-colors">
+                      <tr
+                        key={course.course_id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-900">{course.course_name}</span>
-                            <span className="text-xs text-gray-500 mt-1 line-clamp-1">{course.description}</span>
+                            <span className="text-sm font-semibold text-gray-900">
+                              {course.course_name}
+                            </span>
+                            <span className="text-xs text-gray-500 mt-1 line-clamp-1">
+                              {course.description}
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-sm text-gray-700">{getDepartmentName(course.dept_id)}</span>
+                          <span className="text-sm text-gray-700">
+                            {getDepartmentName(course.dept_id)}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
@@ -196,7 +263,9 @@ export default function ManageCourses() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-900">{enrolled} Students</span>
+                          <span className="text-sm font-medium text-gray-900">
+                            {enrolled} Students
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col text-xs text-gray-600">
@@ -206,13 +275,15 @@ export default function ManageCourses() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor()}`}>
+                          <span
+                            className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor()}`}
+                          >
                             {getStatusText()}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <button 
-                            onClick={() => handleDelete(course)} 
+                          <button
+                            onClick={() => handleDelete(course)}
                             className="text-red-600 hover:text-red-900 text-sm font-medium transition-colors"
                           >
                             Delete
@@ -226,20 +297,44 @@ export default function ManageCourses() {
             </div>
           ) : (
             <div className="p-12 text-center">
-              <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              <svg
+                className="w-16 h-16 mx-auto text-gray-300 mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
               </svg>
-              <p className="text-gray-500 text-lg font-medium mb-2">No courses found</p>
-              <p className="text-gray-400 text-sm mb-4">Try adjusting your search or filter criteria</p>
-              <a
-                href="/CollegeAdmin/AddCourse"
+              <p className="text-gray-500 text-lg font-medium mb-2">
+                No courses found
+              </p>
+              <p className="text-gray-400 text-sm mb-4">
+                Try adjusting your search or filter criteria
+              </p>
+              <Link
+                to="/CollegeAdmin/AddCourse"
                 className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
                 </svg>
                 Add Your First Course
-              </a>
+              </Link>
             </div>
           )}
         </div>
@@ -251,27 +346,44 @@ export default function ManageCourses() {
           <div className="bg-white p-6 rounded-xl shadow-xl max-w-md w-full">
             <div className="flex items-center mb-4">
               <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-6 h-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
-              <h3 className="ml-4 text-lg font-bold text-gray-900">Delete Course</h3>
+              <h3 className="ml-4 text-lg font-bold text-gray-900">
+                Delete Course
+              </h3>
             </div>
             <p className="text-gray-600 mb-2">
-              Are you sure you want to delete <span className="font-semibold text-gray-900">{courseToDelete?.course_name}</span>?
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-gray-900">
+                {courseToDelete?.course_name}
+              </span>
+              ?
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              This action cannot be undone. All enrollments and related data will be permanently removed.
+              This action cannot be undone. All enrollments and related data
+              will be permanently removed.
             </p>
             <div className="flex space-x-3">
-              <button 
-                onClick={() => setShowDeleteModal(false)} 
+              <button
+                onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
               >
                 Cancel
               </button>
-              <button 
-                onClick={confirmDelete} 
+              <button
+                onClick={confirmDelete}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
               >
                 Delete Course

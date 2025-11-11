@@ -1,19 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Layout from "../../components/Layout";
 import Table from "../../components/Table";
 import dataService from "../../services/dataService";
 
 const StudentEnrollments = () => {
   // Mock current user
-  const currentUser = { id: "S1001", studentId: "S1001" };
+  const currentUser = { id: "S1001", studentId: "S1001", name: "Sneha Rao" };
 
   const [enrollments, setEnrollments] = useState([]);
 
-  useEffect(() => {
-    loadEnrollments();
-  }, []);
-
-  const loadEnrollments = () => {
+  const loadEnrollments = useCallback(() => {
     const myEnrollments = dataService.getEnrollmentsByStudent(currentUser.id);
     const allCourses = dataService.getAll("courses");
 
@@ -30,7 +26,11 @@ const StudentEnrollments = () => {
 
     console.log("Enriched enrollments:", enrichedEnrollments); // Debug log
     setEnrollments(enrichedEnrollments);
-  };
+  }, [currentUser.id]);
+
+  useEffect(() => {
+    loadEnrollments();
+  }, [loadEnrollments]);
 
   const getStatusBadge = (status) => {
     const colors = {
@@ -103,7 +103,7 @@ const StudentEnrollments = () => {
   };
 
   return (
-    <Layout>
+    <Layout userName={currentUser.name}>
       <div className="space-y-6">
         {/* Header */}
         <div>

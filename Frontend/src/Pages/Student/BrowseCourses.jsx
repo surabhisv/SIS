@@ -6,7 +6,7 @@ import dataService from "../../services/dataService";
 
 const BrowseCourses = () => {
   // Mock current user
-  const currentUser = { id: "S1001", studentId: "S1001" };
+  const currentUser = { id: "S1001", studentId: "S1001", name: "Sneha Rao" };
 
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
@@ -98,7 +98,7 @@ const BrowseCourses = () => {
   };
 
   return (
-    <Layout>
+    <Layout userName={currentUser.name}>
       <div className="space-y-6">
         {/* Header */}
         <div>

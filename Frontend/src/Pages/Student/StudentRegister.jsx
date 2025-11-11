@@ -79,7 +79,7 @@ export default function StudentRegister() {
 
     console.log("Registration payload", registrationPayload);
     setTimeout(() => {
-      nav("/student/waiting-approval");
+      nav("/student/Studentlogin");
     }, 2000);
   };
 

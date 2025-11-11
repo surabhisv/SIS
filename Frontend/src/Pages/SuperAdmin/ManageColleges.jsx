@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import Layout from "../../components/Layout";
-import toast from "react-hot-toast";
 
 const ManageColleges = () => {
   const [requests, setRequests] = useState([]);
@@ -45,8 +44,6 @@ const ManageColleges = () => {
         JSON.stringify([...approved, approvedCollege])
       );
     }
-
-    toast.success("College approved successfully!");
   };
 
   const handleReject = (id) => {
@@ -55,7 +52,6 @@ const ManageColleges = () => {
     );
     localStorage.setItem("collegeRequests", JSON.stringify(updated));
     setRequests(updated);
-    toast.error("College request rejected");
   };
 
   const handleDelete = (id) => {
@@ -64,8 +60,6 @@ const ManageColleges = () => {
     const updated = requests.filter((r) => r.id !== id);
     localStorage.setItem("collegeRequests", JSON.stringify(updated));
     setRequests(updated);
-
-    toast.success("Deleted successfully!");
   };
 
   return (
@@ -75,13 +69,13 @@ const ManageColleges = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Manage Colleges</h1>
           <p className="text-gray-600 mt-1">
-            Review, filter, search, approve, or delete college registration requests
+            Review, filter, search, approve, or delete college registration
+            requests
           </p>
         </div>
 
         {/* Filters Section */}
         <div className="bg-white rounded-xl shadow-md p-6 flex flex-col sm:flex-row justify-between gap-4">
-          
           {/* ✅ Search Input */}
           <input
             type="text"
@@ -102,12 +96,10 @@ const ManageColleges = () => {
             <option value="Approved">Approved</option>
             <option value="Rejected">Rejected</option>
           </select>
-
         </div>
 
         {/* Requests Card */}
         <div className="bg-white rounded-xl shadow-md p-8">
-          
           {/* Icon + Info */}
           <div className="text-center mb-8">
             <svg
@@ -116,7 +108,10 @@ const ManageColleges = () => {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
                 d="M12 6V4a2 2 0 114 0v2m-4 0H6m6 0h6m-6 0v12m0 0H6m6 0h6"
               />
             </svg>
@@ -162,10 +157,18 @@ const ManageColleges = () => {
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredRequests.map((r) => (
                     <tr key={r.id}>
-                      <td className="px-6 py-4 text-sm text-gray-700">{r.collegeName}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{r.adminEmail}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{r.description}</td>
-                      <td className="px-6 py-4 text-sm text-gray-700">{r.website || "—"}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {r.collegeName}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {r.adminEmail}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {r.description}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {r.website || "—"}
+                      </td>
 
                       <td className="px-6 py-4">
                         <span
@@ -212,7 +215,6 @@ const ManageColleges = () => {
                     </tr>
                   ))}
                 </tbody>
-
               </table>
             </div>
           )}
