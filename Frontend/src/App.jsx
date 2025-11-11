@@ -1,5 +1,6 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 // Page components
 import Home from "./Pages/Home.jsx";
@@ -24,26 +25,76 @@ import SeatManagementPage from "./Pages/CollegeAdmin/SeatManagement.jsx";
 import SuperAdminDashboard from "./Pages/SuperAdmin/SuperAdminDashboard.jsx";
 import ManageColleges from "./Pages/SuperAdmin/ManageColleges.jsx";
 import SuperAdminLogin from "./Pages/SuperAdmin/SuperAdminLogin.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-center" />
       {/* App routes */}
       <Routes>
         <Route path="/" element={<Home />} />
 
         {/* Super Admin Routes */}
         <Route path="/superadmin/login" element={<SuperAdminLogin />} />
-        <Route path="/superadmin/dashboard" element={<SuperAdminDashboard />} />
-        <Route path="/superadmin/colleges" element={<ManageColleges />} />
+        <Route
+          path="/superadmin/dashboard"
+          element={
+            <ProtectedRoute
+              roles={["SUPERADMIN"]}
+              element={<SuperAdminDashboard />}
+            />
+          }
+        />
+        <Route
+          path="/superadmin/colleges"
+          element={
+            <ProtectedRoute
+              roles={["SUPERADMIN"]}
+              element={<ManageColleges />}
+            />
+          }
+        />
 
         {/* Student pages */}
         <Route path="/student/Studentlogin" element={<StudentLogin />} />
         <Route path="/student/register" element={<StudentRegister />} />
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
-        <Route path="/student/profile" element={<StudentProfile />} />
-        <Route path="/student/courses" element={<BrowseCourses />} />
-        <Route path="/student/enrollments" element={<StudentEnrollments />} />
+        <Route
+          path="/student/dashboard"
+          element={
+            <ProtectedRoute
+              roles={["STUDENT"]}
+              element={<StudentDashboard />}
+            />
+          }
+        />
+        <Route
+          path="/student/profile"
+          element={
+            <ProtectedRoute
+              roles={["STUDENT"]}
+              element={<StudentProfile />}
+            />
+          }
+        />
+        <Route
+          path="/student/courses"
+          element={
+            <ProtectedRoute
+              roles={["STUDENT"]}
+              element={<BrowseCourses />}
+            />
+          }
+        />
+        <Route
+          path="/student/enrollments"
+          element={
+            <ProtectedRoute
+              roles={["STUDENT"]}
+              element={<StudentEnrollments />}
+            />
+          }
+        />
 
         {/* College Admin pages */}
         <Route
@@ -52,21 +103,43 @@ function App() {
         />
         <Route
           path="/CollegeAdmin/CollegeAdminDashboard"
-          element={<CollegeAdminDashboard />}
+          element={
+            <ProtectedRoute
+              roles={["ADMIN"]}
+              element={<CollegeAdminDashboard />}
+            />
+          }
         />
         <Route
           path="/CollegeAdmin/CollegeAdminRequest"
           element={<CollegeAdminRequest />}
         />
-        <Route path="/CollegeAdmin/ManageCourses" element={<ManageCourses />} />
-        <Route path="/CollegeAdmin/AddCourse" element={<AddCourse />} />
+        <Route
+          path="/CollegeAdmin/ManageCourses"
+          element={
+            <ProtectedRoute roles={["ADMIN"]} element={<ManageCourses />} />
+          }
+        />
+        <Route
+          path="/CollegeAdmin/AddCourse"
+          element={
+            <ProtectedRoute roles={["ADMIN"]} element={<AddCourse />} />
+          }
+        />
         <Route
           path="/CollegeAdmin/ViewEnrollments"
-          element={<ViewEnrollments />}
+          element={
+            <ProtectedRoute roles={["ADMIN"]} element={<ViewEnrollments />} />
+          }
         />
         <Route
           path="/CollegeAdmin/SeatManagement"
-          element={<SeatManagementPage />}
+          element={
+            <ProtectedRoute
+              roles={["ADMIN"]}
+              element={<SeatManagementPage />}
+            />
+          }
         />
       </Routes>
     </BrowserRouter>

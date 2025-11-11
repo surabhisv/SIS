@@ -1,15 +1,38 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 
 const SuperAdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const nav = useNavigate();
+  const location = useLocation();
+  const { login, logout } = useAuth();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // navigation to portal page on login
-    nav("/superadmin/dashboard");
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const user = await login({ email, password });
+
+      if (!user.roles.includes("SUPERADMIN")) {
+        setError("You do not have Super Admin access.");
+        logout();
+        return;
+      }
+
+  const target = location.state?.from?.pathname || "/superadmin/dashboard";
+  nav(target, { replace: true });
+    } catch (err) {
+      const message = err?.response?.data?.message || err.message || "Login failed";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -58,16 +81,25 @@ const SuperAdminLogin = () => {
             />
           </div>
 
+          {error && (
+            <p className="text-red-200 text-sm text-center" role="alert">
+              {error}
+            </p>
+          )}
+
           {/* Login Button */}
           <button
             type="submit"
+            disabled={isSubmitting}
             className="mt-3 relative overflow-hidden px-6 py-2.5 rounded-2xl font-semibold text-white shadow-lg
               bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500
               hover:from-indigo-700 hover:via-purple-700 hover:to-indigo-600
-              transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl
+              transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed
               group"
           >
-            <span className="relative z-10">Login</span>
+            <span className="relative z-10">
+              {isSubmitting ? "Signing in..." : "Login"}
+            </span>
             <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-30 blur-lg transition duration-300"></span>
           </button>
         </form>

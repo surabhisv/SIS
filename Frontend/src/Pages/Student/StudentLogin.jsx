@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 
 export default function StudentLogin() {
   const nav = useNavigate();
+  const location = useLocation();
+  const { login, logout } = useAuth();
 
   // Mock list (pretend fetched from backend)
   const colleges = [
@@ -15,6 +18,7 @@ export default function StudentLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCollegeSelect = (e) => {
     const college = e.target.value;
@@ -27,15 +31,32 @@ export default function StudentLogin() {
     }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!selectedCollege) return setError("Please select your college first.");
     if (!colleges.includes(selectedCollege))
       return setError("College not registered.");
     if (!email || !password) return setError("Please fill all fields.");
+    setError("");
+    setIsSubmitting(true);
 
-    // mock success
-    nav("/student/dashboard");
+    try {
+      const user = await login({ email, password });
+
+      if (!user.roles.includes("STUDENT")) {
+        setError("This account is not registered as a student.");
+        logout();
+        return;
+      }
+
+  const target = location.state?.from?.pathname || "/student/dashboard";
+  nav(target, { replace: true });
+    } catch (err) {
+      const message = err?.response?.data?.message || err.message || "Login failed";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -95,9 +116,10 @@ export default function StudentLogin() {
 
             <button
               onClick={handleLogin}
-              className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Login
+              {isSubmitting ? "Signing in..." : "Login"}
             </button>
 
             <p className="text-sm text-gray-700 text-center mt-5">

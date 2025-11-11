@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 
 export default function CollegeAdminLogin() {
   const nav = useNavigate();
+  const location = useLocation();
+  const { login, logout } = useAuth();
 
   const colleges = [
     "Tech University",
@@ -14,6 +17,7 @@ export default function CollegeAdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCollegeSelect = (e) => {
     const college = e.target.value;
@@ -26,15 +30,33 @@ export default function CollegeAdminLogin() {
     }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!selectedCollege) return setError("Please select your college first.");
     if (!colleges.includes(selectedCollege))
       return setError("College not registered.");
     if (!email || !password) return setError("Please fill all fields.");
+    setError("");
+    setIsSubmitting(true);
 
-    // mock success
-    nav("/CollegeAdmin/CollegeAdminDashboard");
+    try {
+      const user = await login({ email, password });
+
+      if (!user.roles.includes("ADMIN")) {
+        setError("This account is not approved for college administration.");
+        logout();
+        return;
+      }
+
+      const target =
+        location.state?.from?.pathname || "/CollegeAdmin/CollegeAdminDashboard";
+      nav(target, { replace: true });
+    } catch (err) {
+      const message = err?.response?.data?.message || err.message || "Login failed";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -93,9 +115,10 @@ export default function CollegeAdminLogin() {
 
             <button
               onClick={handleLogin}
-              className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300"
+              disabled={isSubmitting}
+              className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Login
+              {isSubmitting ? "Signing in..." : "Login"}
             </button>
           </>
         )}
