@@ -43,7 +43,7 @@ const BrowseCourses = () => {
   const loadCourses = () => {
     const allCourses = dataService.getAll("courses");
     console.log("Loaded courses:", allCourses); // Debug log
-    
+
     const enrichedCourses = allCourses.map((course) => {
       const enrollments = dataService.getEnrollmentsByCourse(
         course.course_id || course.id
@@ -249,7 +249,8 @@ const BrowseCourses = () => {
                 {selectedCourse.course_name || selectedCourse.name || "Course"}
               </h3>
               <p className="text-gray-600">
-                Course ID: {selectedCourse.course_id || selectedCourse.id || "N/A"}
+                Course ID:{" "}
+                {selectedCourse.course_id || selectedCourse.id || "N/A"}
               </p>
             </div>
 
@@ -272,7 +273,8 @@ const BrowseCourses = () => {
                   <strong>Credits:</strong> {selectedCourse.credits || "N/A"}
                 </li>
                 <li>
-                  <strong>Department ID:</strong> {selectedCourse.dept_id || "N/A"}
+                  <strong>Department ID:</strong>{" "}
+                  {selectedCourse.dept_id || "N/A"}
                 </li>
               </ul>
             </div>

@@ -82,7 +82,9 @@ const StudentEnrollments = () => {
       header: "Status",
       accessor: "status",
       render: (row) => (
-        <span className={getStatusBadge(row.status)}>{row.status || "UNKNOWN"}</span>
+        <span className={getStatusBadge(row.status)}>
+          {row.status || "UNKNOWN"}
+        </span>
       ),
     },
   ];
