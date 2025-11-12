@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
+import axios from "axios";
+import { API_BASE_URL, TOKEN_STORAGE_KEY } from "../../config/constants";
 
 const SuperAdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -10,21 +12,34 @@ const SuperAdminDashboard = () => {
     rejected: 0,
   });
 
+  // 🔹 Fetch stats from backend
   useEffect(() => {
     loadStats();
   }, []);
 
-  const loadStats = () => {
-    const requests = JSON.parse(localStorage.getItem("collegeRequests")) || [];
-    // const approvedColleges =
-    //   JSON.parse(localStorage.getItem("approvedColleges")) || [];
+  const loadStats = async () => {
+    try {
+      const token = localStorage.getItem(TOKEN_STORAGE_KEY);
 
-    setStats({
-      totalColleges: requests.length,
-      pending: requests.filter((r) => r.status === "Pending").length,
-      approved: requests.filter((r) => r.status === "Approved").length,
-      rejected: requests.filter((r) => r.status === "Rejected").length,
-    });
+      // 1️⃣ Fetch all colleges from backend
+      const response = await axios.get(`${API_BASE_URL}/api/v1/superadmin/requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const colleges = response.data;
+
+      // 2️⃣ Count stats
+      const total = colleges.length;
+      const pending = colleges.filter((c) => c.status === "PENDING").length;
+      const approved = colleges.filter((c) => c.status === "APPROVED").length;
+      const rejected = colleges.filter((c) => c.status === "REJECTED").length;
+
+      setStats({ totalColleges: total, pending, approved, rejected });
+    } catch (err) {
+      console.error("Error loading super admin stats:", err);
+    }
   };
 
   const statCards = [

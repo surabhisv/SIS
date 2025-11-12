@@ -19,11 +19,18 @@ const SuperAdminLogin = () => {
     try {
       const user = await login({ email, password });
 
-      if (!user.roles.includes("SUPERADMIN")) {
-        setError("You do not have Super Admin access.");
-        logout();
-        return;
-      }
+      // Handle both array or string roles
+const roles = Array.isArray(user.roles)
+  ? user.roles
+  : typeof user.roles === "string"
+  ? user.roles.split(",")
+  : [];
+
+if (!roles.includes("SUPERADMIN")) {
+  setError("You do not have Super Admin access.");
+  logout();
+  return;
+}
 
   const target = location.state?.from?.pathname || "/superadmin/dashboard";
   nav(target, { replace: true });
