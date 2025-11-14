@@ -1,29 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import useAuth from "../../hooks/useAuth";
+import { API_BASE_URL } from "../../config/constants";
 
 export default function CollegeAdminLogin() {
   const nav = useNavigate();
   const location = useLocation();
   const { login, logout } = useAuth();
 
-  const colleges = [
-    "Tech University",
-    "Global Institute",
-    "Bright Future College",
-  ];
-
+  const [colleges, setColleges] = useState([]);
   const [selectedCollege, setSelectedCollege] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingColleges, setLoadingColleges] = useState(true);
+
+  // Fetch list of approved colleges from backend
+  useEffect(() => {
+    const fetchColleges = async () => {
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/api/v1/public/colleges`
+        );
+
+        setColleges(response.data);
+      } catch (err) {
+        setError("Unable to fetch colleges. Please try again later.");
+      } finally {
+        setLoadingColleges(false);
+      }
+    };
+
+    fetchColleges();
+  }, []);
 
   const handleCollegeSelect = (e) => {
-    const college = e.target.value;
-    setSelectedCollege(college);
+    const clg = e.target.value;
+    setSelectedCollege(clg);
 
-    if (college && !colleges.includes(college)) {
+    const exists = colleges.some(
+      (c) => c.collegeName === clg
+    );
+
+    if (clg && !exists && clg !== "NotListed") {
       setError("❌ College not registered. Please send a request to Super Admin.");
     } else {
       setError("");
@@ -32,10 +53,16 @@ export default function CollegeAdminLogin() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
     if (!selectedCollege) return setError("Please select your college first.");
-    if (!colleges.includes(selectedCollege))
-      return setError("College not registered.");
+
+    const collegeExists = colleges.some(
+      (c) => c.collegeName === selectedCollege
+    );
+    if (!collegeExists) return setError("College not registered.");
+
     if (!email || !password) return setError("Please fill all fields.");
+
     setError("");
     setIsSubmitting(true);
 
@@ -52,7 +79,8 @@ export default function CollegeAdminLogin() {
         location.state?.from?.pathname || "/CollegeAdmin/CollegeAdminDashboard";
       nav(target, { replace: true });
     } catch (err) {
-      const message = err?.response?.data?.message || err.message || "Login failed";
+      const message =
+        err?.response?.data?.message || err.message || "Login failed";
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -77,26 +105,39 @@ export default function CollegeAdminLogin() {
         <label className="block text-gray-700 font-medium mb-2">
           Select Your College
         </label>
-        <select
-          value={selectedCollege}
-          onChange={handleCollegeSelect}
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-5 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-        >
-          <option value="">-- Choose College --</option>
-          {colleges.map((clg) => (
-            <option key={clg} value={clg}>
-              {clg}
+
+        {loadingColleges ? (
+          <p className="text-center text-gray-600 mb-4">Loading colleges...</p>
+        ) : (
+          <select
+            value={selectedCollege}
+            onChange={handleCollegeSelect}
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-5 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+          >
+            <option key="default" value="">
+              -- Choose College --
             </option>
-          ))}
-          <option value="NotListed">My College is not listed</option>
-        </select>
+
+            {colleges.map((clg) => (
+              <option
+                key={clg.collegeId}
+                value={clg.collegeName}
+              >
+                {clg.collegeName}
+              </option>
+            ))}
+
+            <option key="NotListed" value="NotListed">
+              My College is not listed
+            </option>
+          </select>
+        )}
 
         {error && (
           <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
         )}
 
-        {/* Login form only for approved colleges */}
-        {!error && selectedCollege && (
+        {!error && selectedCollege && selectedCollege !== "NotListed" && (
           <>
             <input
               type="email"
@@ -105,6 +146,7 @@ export default function CollegeAdminLogin() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
             />
+
             <input
               type="password"
               placeholder="Password"
@@ -123,7 +165,6 @@ export default function CollegeAdminLogin() {
           </>
         )}
 
-        {/* Redirect option for unlisted colleges */}
         {selectedCollege === "NotListed" && (
           <div className="text-center mt-4">
             <button
