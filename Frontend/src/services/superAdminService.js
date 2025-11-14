@@ -1,18 +1,13 @@
 import apiClient from "./apiClient";
 import { TOKEN_STORAGE_KEY } from "../config/constants";
 
-/**
- * Helper: Get Authorization header
- */
+/** Helper: Authorization header */
 const getAuthHeader = () => {
   const token = localStorage.getItem(TOKEN_STORAGE_KEY);
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
-/**
- * Fetch all college registration requests.
- * (GET /api/v1/superadmin/requests)
- */
+/** GET all REQUESTS */
 export const fetchCollegeRequests = async () => {
   const response = await apiClient.get("/api/v1/superadmin/requests", {
     headers: getAuthHeader(),
@@ -20,10 +15,7 @@ export const fetchCollegeRequests = async () => {
   return response.data;
 };
 
-/**
- * Approve a college registration request.
- * (PUT /api/v1/superadmin/requests/{requestId}/approve)
- */
+/** APPROVE */
 export const approveCollegeRequest = async (requestId) => {
   const response = await apiClient.put(
     `/api/v1/superadmin/requests/${requestId}/approve`,
@@ -33,10 +25,7 @@ export const approveCollegeRequest = async (requestId) => {
   return response.data;
 };
 
-/**
- * Reject a college registration request.
- * (PUT /api/v1/superadmin/requests/{requestId}/reject)
- */
+/** REJECT */
 export const rejectCollegeRequest = async (requestId) => {
   const response = await apiClient.put(
     `/api/v1/superadmin/requests/${requestId}/reject`,
@@ -46,22 +35,16 @@ export const rejectCollegeRequest = async (requestId) => {
   return response.data;
 };
 
-/**
- * Delete a college registration request.
- * (DELETE /api/v1/superadmin/requests/{requestId})
- */
-export const deleteCollegeRequest = async (requestId) => {
+/** DELETE APPROVED COLLEGE */
+export const deleteCollege = async (collegeId) => {
   const response = await apiClient.delete(
-    `/api/v1/superadmin/requests/${requestId}`,
+    `/api/v1/superadmin/college/${collegeId}`,
     { headers: getAuthHeader() }
   );
   return response.data;
 };
 
-/**
- * Fetch all colleges in the system.
- * (GET /api/v1/superadmin/colleges)
- */
+/** 🔥 GET ALL APPROVED COLLEGES (needed for delete mapping) */
 export const fetchAllColleges = async () => {
   const response = await apiClient.get("/api/v1/superadmin/colleges", {
     headers: getAuthHeader(),
@@ -69,12 +52,10 @@ export const fetchAllColleges = async () => {
   return response.data;
 };
 
-
-
 export default {
   fetchCollegeRequests,
   approveCollegeRequest,
   rejectCollegeRequest,
-  deleteCollegeRequest,
-  fetchAllColleges,
+  deleteCollege,
+  fetchAllColleges,   // ✅ FIXED — now exported
 };

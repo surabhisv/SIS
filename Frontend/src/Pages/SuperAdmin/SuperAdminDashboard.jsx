@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";   // ⭐ added useLocation
 import Layout from "../../components/Layout";
 import axios from "axios";
 import { API_BASE_URL, TOKEN_STORAGE_KEY } from "../../config/constants";
@@ -12,31 +12,47 @@ const SuperAdminDashboard = () => {
     rejected: 0,
   });
 
-  // 🔹 Fetch stats from backend
+  const location = useLocation();  // ⭐ detect page navigation
+
   useEffect(() => {
     loadStats();
-  }, []);
+  }, [location.pathname]);   // ⭐ re-run whenever dashboard becomes active
 
   const loadStats = async () => {
     try {
       const token = localStorage.getItem(TOKEN_STORAGE_KEY);
 
-      // 1️⃣ Fetch all colleges from backend
-      const response = await axios.get(`${API_BASE_URL}/api/v1/superadmin/requests`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      // 1️⃣ Fetch REQUESTS → pending + rejected + approved
+      const requestsResponse = await axios.get(
+        `${API_BASE_URL}/api/v1/superadmin/requests`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const requests = requestsResponse.data;
+
+      const pending = requests.filter((r) => r.status === "PENDING").length;
+      const rejected = requests.filter((r) => r.status === "REJECTED").length;
+      const approved = requests.filter((r) => r.status === "APPROVED").length;
+
+      // 2️⃣ Fetch COLLEGES → total colleges only
+      const collegesResponse = await axios.get(
+        `${API_BASE_URL}/api/v1/superadmin/colleges`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const totalColleges = collegesResponse.data.length;
+
+      // 3️⃣ Update stats instantly
+      setStats({
+        totalColleges,
+        approved,
+        pending,
+        rejected,
       });
-
-      const colleges = response.data;
-
-      // 2️⃣ Count stats
-      const total = colleges.length;
-      const pending = colleges.filter((c) => c.status === "PENDING").length;
-      const approved = colleges.filter((c) => c.status === "APPROVED").length;
-      const rejected = colleges.filter((c) => c.status === "REJECTED").length;
-
-      setStats({ totalColleges: total, pending, approved, rejected });
     } catch (err) {
       console.error("Error loading super admin stats:", err);
     }
@@ -72,7 +88,6 @@ const SuperAdminDashboard = () => {
   return (
     <Layout role="superadmin" userName="Super Admin">
       <div className="space-y-6">
-        {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-xl shadow-lg p-8">
           <h1 className="text-3xl font-bold mb-2">Super Admin Dashboard</h1>
           <p className="text-purple-100">
@@ -80,7 +95,6 @@ const SuperAdminDashboard = () => {
           </p>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {statCards.map((stat, index) => (
             <div key={index} className="bg-white rounded-xl shadow-md p-6">
@@ -113,7 +127,6 @@ const SuperAdminDashboard = () => {
           ))}
         </div>
 
-        {/* Manage Colleges */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
           <Link
             to="/superadmin/colleges"
