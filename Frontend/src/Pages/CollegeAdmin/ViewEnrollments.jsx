@@ -1,88 +1,149 @@
 import { useState, useEffect } from "react";
 import CollegeAdminLayout from "../../components/CollegeAdminLayout";
-import coursesData from "../../data/courses.json";
-import enrollmentsData from "../../data/enrollments.json";
-import studentsData from "../../data/students.json";
-import usersData from "../../data/users.json";
-import departmentsData from "../../data/departments.json";
+import { fetchDashboard } from "../../services/collegeAdminService";
 
 export default function EnrollmentsPage() {
-  const currentUser = {
-    user_id: 2,
-    college_id: 1,
-    email: "ravi.kumar@techvalley.edu",
-  };
-
   const [enrollmentInfo, setEnrollmentInfo] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedDept, setExpandedDept] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadEnrollments();
   }, []);
 
-  const loadEnrollments = () => {
-    const collegeStudents = studentsData.filter(s => s.college_id === currentUser.college_id);
-    const collegeCourses = coursesData.filter(c => c.college_id === currentUser.college_id);
-    const courseMap = Object.fromEntries(collegeCourses.map(c => [c.course_id, c]));
+  const loadEnrollments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    const studentEnrollments = collegeStudents.map(student => {
-      const user = usersData.find(u => u.user_id === student.user_id);
-      const studentEnrollmentsData = enrollmentsData.filter(e => e.student_id === student.student_id);
+      // Fetch dashboard data which should include enrollment information
+      const dashboardData = await fetchDashboard();
 
-      const enrolledCourses = studentEnrollmentsData.map(enrollment => {
-        const course = courseMap[enrollment.course_id];
-        const dept = departmentsData.find(d => d.dept_id === course.dept_id);
-        return {
-          enrollment_id: enrollment.enrollment_id,
-          course_name: course.course_name,
-          department: dept ? dept.dept_name : "Unknown",
-          dept_id: course.dept_id,
-          requested_at: enrollment.requested_at,
-          credits: course.credits,
-        };
+      // Process enrollment data if available
+      if (dashboardData?.enrollmentsByDepartment) {
+        setEnrollmentInfo(dashboardData.enrollmentsByDepartment);
+      } else if (dashboardData?.allEnrollments) {
+        // If the API returns a flat list, we'll need to group by department
+        const grouped = groupEnrollmentsByDepartment(
+          dashboardData.allEnrollments
+        );
+        setEnrollmentInfo(grouped);
+      } else {
+        setEnrollmentInfo([]);
+      }
+    } catch (err) {
+      console.error("Error loading enrollments:", err);
+      setError("Failed to load enrollment data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const groupEnrollmentsByDepartment = (enrollments) => {
+    const grouped = {};
+
+    enrollments.forEach((enrollment) => {
+      const dept = enrollment.departmentName || "Uncategorized";
+      if (!grouped[dept]) {
+        grouped[dept] = [];
+      }
+      grouped[dept].push({
+        studentId: enrollment.studentId,
+        studentName: enrollment.studentName,
+        studentEmail: enrollment.studentEmail,
+        courseName: enrollment.courseName,
+        credits: enrollment.credits,
+        enrolledAt: enrollment.enrolledAt,
       });
-
-      return {
-        student_id: student.student_id,
-        studentName: user ? user.full_name : "Unknown Student",
-        studentEmail: user ? user.email : "",
-        department: departmentsData.find(d => d.dept_id === student.dept_id)?.dept_name || "N/A",
-        dept_id: student.dept_id,
-        enrolledCourses,
-      };
     });
 
-    setEnrollmentInfo(studentEnrollments);
+    return Object.entries(grouped).map(([dept, students]) => ({
+      department: dept,
+      students: students,
+    }));
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
-  // Filter by search
-  const filteredStudents = enrollmentInfo.filter(student => {
+  // Filter enrollments by search term
+  const filteredEnrollments = enrollmentInfo.filter((deptData) => {
     const term = searchTerm.toLowerCase();
     return (
-      student.studentName.toLowerCase().includes(term) ||
-      student.studentEmail.toLowerCase().includes(term) ||
-      student.department.toLowerCase().includes(term)
+      deptData.department.toLowerCase().includes(term) ||
+      deptData.students?.some(
+        (s) =>
+          s.studentName?.toLowerCase().includes(term) ||
+          s.studentEmail?.toLowerCase().includes(term)
+      )
     );
   });
 
-  // Group by department
-  const studentsByDept = filteredStudents.reduce((acc, s) => {
-    if (!acc[s.department]) acc[s.department] = [];
-    acc[s.department].push(s);
+  // Create a map for easy access
+  const studentsByDept = filteredEnrollments.reduce((acc, deptData) => {
+    acc[deptData.department] = deptData.students || [];
     return acc;
   }, {});
+
+  if (loading) {
+    return (
+      <CollegeAdminLayout activePage="enrollments">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading enrollments...</p>
+          </div>
+        </div>
+      </CollegeAdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <CollegeAdminLayout activePage="enrollments">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <svg
+              className="w-16 h-16 text-red-500 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <p className="text-gray-800 font-semibold mb-2">{error}</p>
+            <button
+              onClick={loadEnrollments}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </CollegeAdminLayout>
+    );
+  }
 
   return (
     <CollegeAdminLayout activePage="enrollments">
       <div className="bg-white shadow-sm border-b border-gray-200 px-8 py-4">
-        <h2 className="text-2xl font-bold text-gray-800">Enrollments by Department</h2>
+        <h2 className="text-2xl font-bold text-gray-800">
+          Enrollments by Department
+        </h2>
         <p className="text-sm text-gray-500 mt-1">
           Expand a department to view students and their enrolled courses
         </p>
@@ -98,7 +159,12 @@ export default function EnrollmentsPage() {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
             <input
               type="text"
@@ -113,58 +179,79 @@ export default function EnrollmentsPage() {
         {/* Accordion-style department list */}
         <div className="space-y-4">
           {Object.entries(studentsByDept).map(([dept, students]) => (
-            <div key={dept} className="bg-white shadow-md rounded-xl overflow-hidden">
+            <div
+              key={dept}
+              className="bg-white shadow-md rounded-xl overflow-hidden"
+            >
               {/* Department Header */}
               <button
-                onClick={() => setExpandedDept(expandedDept === dept ? null : dept)}
+                onClick={() =>
+                  setExpandedDept(expandedDept === dept ? null : dept)
+                }
                 className="w-full flex items-center justify-between bg-indigo-50 px-6 py-4 hover:bg-indigo-100 transition-all"
               >
                 <h3 className="text-lg font-semibold text-indigo-700 flex items-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                   {dept}
                 </h3>
-                <span className="text-sm text-gray-600">{students.length} students</span>
+                <span className="text-sm text-gray-600">
+                  {students.length} students
+                </span>
               </button>
 
               {/* Expanded students list */}
               {expandedDept === dept && (
                 <div className="p-6 space-y-4 border-t border-gray-200">
-                  {students.map((student) => (
+                  {students.map((student, idx) => (
                     <div
-                      key={student.student_id}
+                      key={student.studentId || idx}
                       className="border border-gray-200 rounded-lg bg-gray-50 p-4"
                     >
                       <div className="flex items-center justify-between mb-3">
                         <div>
-                          <h4 className="font-semibold text-gray-800">{student.studentName}</h4>
-                          <p className="text-sm text-gray-500">{student.studentEmail}</p>
+                          <h4 className="font-semibold text-gray-800">
+                            {student.studentName || "Unknown Student"}
+                          </h4>
+                          <p className="text-sm text-gray-500">
+                            {student.studentEmail || "No email"}
+                          </p>
                         </div>
-                        <span className="text-xs text-gray-500">
-                          ID: {student.student_id}
-                        </span>
+                        {student.studentId && (
+                          <span className="text-xs text-gray-500">
+                            ID: {student.studentId}
+                          </span>
+                        )}
                       </div>
 
-                      {student.enrolledCourses.length === 0 ? (
-                        <p className="text-sm text-gray-400 italic">No courses enrolled.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {student.enrolledCourses.map((course, idx) => (
-                            <div
-                              key={idx}
-                              className="flex justify-between bg-white p-3 rounded-lg border border-gray-200"
-                            >
-                              <p className="text-sm font-medium text-gray-800">
-                                {course.course_name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {course.credits} Credits • {formatDate(course.requested_at)}
-                              </p>
-                            </div>
-                          ))}
+                      <div className="bg-white p-3 rounded-lg border border-gray-200">
+                        <p className="text-sm font-medium text-gray-800">
+                          {student.courseName || "Unknown Course"}
+                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className="text-xs text-gray-500">
+                            {student.credits
+                              ? `${student.credits} Credits`
+                              : ""}
+                          </p>
+                          {student.enrolledAt && (
+                            <p className="text-xs text-gray-500">
+                              {formatDate(student.enrolledAt)}
+                            </p>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -174,8 +261,12 @@ export default function EnrollmentsPage() {
 
           {Object.keys(studentsByDept).length === 0 && (
             <div className="bg-white rounded-xl shadow-md p-12 text-center">
-              <p className="text-gray-500 text-lg font-medium">No enrollments found</p>
-              <p className="text-gray-400 text-sm mt-2">Try adjusting your search</p>
+              <p className="text-gray-500 text-lg font-medium">
+                No enrollments found
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                Try adjusting your search
+              </p>
             </div>
           )}
         </div>

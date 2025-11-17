@@ -1,18 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import CollegeAdminLayout from "../../components/CollegeAdminLayout";
-import coursesData from "../../data/courses.json";
-import departmentsData from "../../data/departments.json";
-import enrollmentsData from "../../data/enrollments.json";
+import { fetchCourses, deleteCourse } from "../../services/collegeAdminService";
+import { fetchDepartments } from "../../services/publicService";
 
 export default function ManageCourses() {
-  // Current logged-in admin (Ravi Kumar from Tech Valley Institute)
-  const currentUser = {
-    user_id: 2,
-    college_id: 1,
-    email: "ravi.kumar@techvalley.edu",
-  };
-
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,25 +12,34 @@ export default function ManageCourses() {
   const [departments, setDepartments] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const loadCourses = useCallback(() => {
+  useEffect(() => {
+    loadCoursesAndDepartments();
+  }, []);
+
+  const loadCoursesAndDepartments = async () => {
     try {
-      // Get courses for the current college
-      const collegeCourses = coursesData.filter(
-        (c) => c.college_id === currentUser.college_id
-      );
-      setCourses(collegeCourses);
+      setLoading(true);
+      setError(null);
 
-      // Get unique departments for this college's courses
-      const deptIds = [...new Set(collegeCourses.map((c) => c.dept_id))];
-      const uniqueDepts = departmentsData.filter((d) =>
-        deptIds.includes(d.dept_id)
-      );
-      setDepartments(uniqueDepts);
+      // Fetch courses and departments in parallel
+      const [coursesData, depts] = await Promise.all([
+        fetchCourses(),
+        fetchDepartments(),
+      ]);
+
+      setCourses(coursesData || []);
+      setDepartments(depts || []);
     } catch (error) {
-      console.error("Error loading courses:", error);
+      console.error("Error loading data:", error);
+      setError("Failed to load courses. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }, [currentUser.college_id]);
+  };
 
   const filterCourses = useCallback(() => {
     let filtered = [...courses];
@@ -46,23 +47,19 @@ export default function ManageCourses() {
     if (searchTerm) {
       filtered = filtered.filter(
         (c) =>
-          c.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.description?.toLowerCase().includes(searchTerm.toLowerCase())
+          c.courseName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.courseCode?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (selectedDepartment !== "all") {
-      filtered = filtered.filter(
-        (c) => c.dept_id === parseInt(selectedDepartment)
-      );
+      const deptId = parseInt(selectedDepartment);
+      filtered = filtered.filter((c) => c.deptId === deptId);
     }
 
     setFilteredCourses(filtered);
   }, [courses, searchTerm, selectedDepartment]);
-
-  useEffect(() => {
-    loadCourses();
-  }, [loadCourses]);
 
   useEffect(() => {
     filterCourses();
@@ -73,29 +70,45 @@ export default function ManageCourses() {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    setCourses(courses.filter((c) => c.course_id !== courseToDelete.course_id));
-    setShowDeleteModal(false);
-    setCourseToDelete(null);
+  const confirmDelete = async () => {
+    if (!courseToDelete) return;
+
+    try {
+      setDeleting(true);
+      await deleteCourse(courseToDelete.courseId);
+      setCourses(courses.filter((c) => c.courseId !== courseToDelete.courseId));
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+    } catch (error) {
+      console.error("Error deleting course:", error);
+      alert("Failed to delete course. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
-  const getEnrolledCount = (courseId) => {
-    return enrollmentsData.filter(
-      (e) => e.course_id === courseId && e.status === "APPROVED"
-    ).length;
-  };
+  const getStatusColor = (course) => {
+    const now = new Date();
+    const startDate = course.startDate ? new Date(course.startDate) : null;
+    const endDate = course.endDate ? new Date(course.endDate) : null;
 
-  const getStatusColor = () => {
+    if (startDate && endDate) {
+      if (now < startDate) return "bg-blue-100 text-blue-800";
+      if (now > endDate) return "bg-gray-100 text-gray-800";
+    }
     return "bg-green-100 text-green-800";
   };
 
-  const getStatusText = () => {
-    return "Open";
-  };
+  const getStatusText = (course) => {
+    const now = new Date();
+    const startDate = course.startDate ? new Date(course.startDate) : null;
+    const endDate = course.endDate ? new Date(course.endDate) : null;
 
-  const getDepartmentName = (deptId) => {
-    const dept = departmentsData.find((d) => d.dept_id === deptId);
-    return dept ? dept.dept_name : "N/A";
+    if (startDate && endDate) {
+      if (now < startDate) return "Upcoming";
+      if (now > endDate) return "Completed";
+    }
+    return "Open";
   };
 
   const formatDate = (dateString) => {
@@ -106,6 +119,50 @@ export default function ManageCourses() {
       year: "numeric",
     });
   };
+
+  if (loading) {
+    return (
+      <CollegeAdminLayout activePage="courses">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading courses...</p>
+          </div>
+        </div>
+      </CollegeAdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <CollegeAdminLayout activePage="courses">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <svg
+              className="w-16 h-16 text-red-500 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <p className="text-gray-800 font-semibold mb-2">{error}</p>
+            <button
+              onClick={loadCoursesAndDepartments}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </CollegeAdminLayout>
+    );
+  }
 
   return (
     <CollegeAdminLayout activePage="courses">
@@ -171,8 +228,8 @@ export default function ManageCourses() {
             >
               <option value="all">All Departments</option>
               {departments.map((dept) => (
-                <option key={dept.dept_id} value={dept.dept_id}>
-                  {dept.dept_name}
+                <option key={dept.deptId} value={dept.deptId}>
+                  {dept.deptName}
                 </option>
               ))}
             </select>
@@ -191,7 +248,7 @@ export default function ManageCourses() {
             <p className="text-sm text-gray-500">Total Enrollments</p>
             <p className="text-2xl font-bold text-gray-800">
               {filteredCourses.reduce(
-                (acc, c) => acc + getEnrolledCount(c.course_id),
+                (acc, c) => acc + (c.enrolledCount || 0),
                 0
               )}
             </p>
@@ -236,25 +293,25 @@ export default function ManageCourses() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredCourses.map((course) => {
-                    const enrolled = getEnrolledCount(course.course_id);
+                    const enrolled = course.enrolledCount || 0;
                     return (
                       <tr
-                        key={course.course_id}
+                        key={course.courseId}
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
                             <span className="text-sm font-semibold text-gray-900">
-                              {course.course_name}
+                              {course.courseName}
                             </span>
                             <span className="text-xs text-gray-500 mt-1 line-clamp-1">
-                              {course.description}
+                              {course.description || "No description"}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-sm text-gray-700">
-                            {getDepartmentName(course.dept_id)}
+                            {course.departmentName || "N/A"}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -269,16 +326,18 @@ export default function ManageCourses() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col text-xs text-gray-600">
-                            <span>{formatDate(course.start_date)}</span>
+                            <span>{formatDate(course.startDate)}</span>
                             <span className="text-gray-400">to</span>
-                            <span>{formatDate(course.end_date)}</span>
+                            <span>{formatDate(course.endDate)}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <span
-                            className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor()}`}
+                            className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
+                              course
+                            )}`}
                           >
-                            {getStatusText()}
+                            {getStatusText(course)}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -367,7 +426,7 @@ export default function ManageCourses() {
             <p className="text-gray-600 mb-2">
               Are you sure you want to delete{" "}
               <span className="font-semibold text-gray-900">
-                {courseToDelete?.course_name}
+                {courseToDelete?.courseName}
               </span>
               ?
             </p>
@@ -378,15 +437,17 @@ export default function ManageCourses() {
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                disabled={deleting}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+                disabled={deleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50"
               >
-                Delete Course
+                {deleting ? "Deleting..." : "Delete Course"}
               </button>
             </div>
           </div>

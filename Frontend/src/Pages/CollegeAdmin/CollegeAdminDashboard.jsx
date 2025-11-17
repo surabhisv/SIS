@@ -1,20 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import CollegeAdminLayout from "../../components/CollegeAdminLayout";
-import coursesData from "../../data/courses.json";
-import enrollmentsData from "../../data/enrollments.json";
-import studentsData from "../../data/students.json";
-import usersData from "../../data/users.json";
-import departmentsData from "../../data/departments.json";
+import {
+  fetchDashboard,
+  fetchCourses,
+} from "../../services/collegeAdminService";
 
 export default function CollegeAdminDashboard() {
-  // Assuming the logged-in admin is user_id: 2 (Ravi Kumar from Tech Valley Institute)
-  const currentUser = {
-    user_id: 2,
-    college_id: 1,
-    email: "ravi.kumar@techvalley.edu",
-  };
-
   const [stats, setStats] = useState({
     totalCourses: 0,
     totalDepartments: 0,
@@ -23,68 +15,51 @@ export default function CollegeAdminDashboard() {
 
   const [courses, setCourses] = useState([]);
   const [recentEnrollments, setRecentEnrollments] = useState([]);
-
-  const loadDashboardData = useCallback(() => {
-    try {
-      // All courses of the college
-      const collegeCourses = coursesData.filter(
-        (c) => c.college_id === currentUser.college_id
-      );
-      setCourses(collegeCourses);
-
-      // All enrollments for the college's courses
-      const courseIds = collegeCourses.map((c) => c.course_id);
-      const collegeEnrollments = enrollmentsData.filter((e) =>
-        courseIds.includes(e.course_id)
-      );
-      setRecentEnrollments(
-        [...collegeEnrollments]
-          .sort((a, b) => new Date(b.requested_at) - new Date(a.requested_at))
-          .slice(0, 3)
-      );
-
-      // All unique departments of the college
-      const deptIds = [...new Set(collegeCourses.map((c) => c.dept_id))];
-
-      setStats({
-        totalCourses: collegeCourses.length,
-        totalDepartments: deptIds.length,
-        activeEnrollments: collegeEnrollments.filter(
-          (e) => e.status === "APPROVED"
-        ).length,
-      });
-    } catch (error) {
-      console.error("Error loading data:", error);
-    }
-  }, [currentUser.college_id]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadDashboardData();
-  }, [loadDashboardData]);
+  }, []);
 
-  const getStudentName = (studentId) => {
-    const student = studentsData.find((s) => s.student_id === studentId);
-    if (student) {
-      const user = usersData.find((u) => u.user_id === student.user_id);
-      return user ? user.full_name : `Student ${studentId}`;
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch dashboard statistics and courses in parallel
+      const [dashboardData, coursesData] = await Promise.all([
+        fetchDashboard(),
+        fetchCourses(),
+      ]);
+
+      // Set stats from dashboard API
+      if (dashboardData) {
+        setStats({
+          totalCourses: dashboardData.totalCourses || 0,
+          totalDepartments: dashboardData.totalDepartments || 0,
+          activeEnrollments: dashboardData.activeEnrollments || 0,
+        });
+
+        // Set recent enrollments if available
+        if (dashboardData.recentEnrollments) {
+          setRecentEnrollments(dashboardData.recentEnrollments.slice(0, 3));
+        }
+      }
+
+      // Set courses data
+      setCourses(coursesData || []);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+      setError("Failed to load dashboard data. Please try again.");
+    } finally {
+      setLoading(false);
     }
-    return `Student ${studentId}`;
-  };
-
-  const getCourseName = (courseId) => {
-    const course = courses.find((c) => c.course_id === courseId);
-    return course ? course.course_name : `Course ${courseId}`;
   };
 
   const getCourseEnrollmentCount = (courseId) => {
-    return enrollmentsData.filter(
-      (e) => e.course_id === courseId && e.status === "APPROVED"
-    ).length;
-  };
-
-  const getDepartmentName = (deptId) => {
-    const dept = departmentsData.find((d) => d.dept_id === deptId);
-    return dept ? dept.dept_name : "Unknown";
+    const course = courses.find((c) => c.courseId === courseId);
+    return course?.enrolledCount || 0;
   };
 
   const statCards = [
@@ -116,6 +91,50 @@ export default function CollegeAdminDashboard() {
       year: "numeric",
     });
   };
+
+  if (loading) {
+    return (
+      <CollegeAdminLayout activePage="dashboard">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </CollegeAdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <CollegeAdminLayout activePage="dashboard">
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <svg
+              className="w-16 h-16 text-red-500 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <p className="text-gray-800 font-semibold mb-2">{error}</p>
+            <button
+              onClick={loadDashboardData}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </CollegeAdminLayout>
+    );
+  }
 
   return (
     <CollegeAdminLayout activePage="dashboard">
@@ -341,7 +360,7 @@ export default function CollegeAdminDashboard() {
               {recentEnrollments.length > 0 ? (
                 recentEnrollments.map((enrollment) => (
                   <div
-                    key={enrollment.enrollment_id}
+                    key={enrollment.enrollmentId}
                     className="flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div
@@ -375,10 +394,10 @@ export default function CollegeAdminDashboard() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-800">
-                        {getStudentName(enrollment.student_id)}
+                        {enrollment.studentName || "Unknown Student"}
                       </p>
                       <p className="text-xs text-gray-600">
-                        {getCourseName(enrollment.course_id)}
+                        {enrollment.courseName || "Unknown Course"}
                       </p>
                       <div className="flex items-center mt-1">
                         <span
@@ -392,9 +411,11 @@ export default function CollegeAdminDashboard() {
                         >
                           {enrollment.status}
                         </span>
-                        <span className="text-xs text-gray-400 ml-2">
-                          • {formatDate(enrollment.requested_at)}
-                        </span>
+                        {enrollment.requestedAt && (
+                          <span className="text-xs text-gray-400 ml-2">
+                            • {formatDate(enrollment.requestedAt)}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -446,25 +467,26 @@ export default function CollegeAdminDashboard() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {courses.map((course) => {
-                    const enrolled = getCourseEnrollmentCount(course.course_id);
-                    const available = course.seat_limit - enrolled;
-                    const percentFilled = course.seat_limit
-                      ? (enrolled / course.seat_limit) * 100
+                    const enrolled = course.enrolledCount || 0;
+                    const seatLimit = course.seatLimit || 0;
+                    const available = seatLimit - enrolled;
+                    const percentFilled = seatLimit
+                      ? (enrolled / seatLimit) * 100
                       : 0;
                     return (
-                      <tr key={course.course_id} className="hover:bg-gray-50">
+                      <tr key={course.courseId} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
-                            {course.course_name}
+                            {course.courseName}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-500">
-                            {getDepartmentName(course.dept_id)}
+                            {course.departmentName || "N/A"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {course.seat_limit}
+                          {seatLimit}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {enrolled}

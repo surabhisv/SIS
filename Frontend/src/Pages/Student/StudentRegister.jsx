@@ -1,6 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import dataService from "../../services/dataService";
+import {
+  fetchDepartments,
+  fetchApprovedColleges,
+} from "../../services/publicService";
 
 export default function StudentRegister() {
   const nav = useNavigate();
@@ -22,15 +25,24 @@ export default function StudentRegister() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const colleges = dataService.getAll("colleges");
-    const departments = dataService.getAll("departments");
-
-    setCollegeOptions(colleges);
-    // Use department table data instead of courses
-    if (departments && departments.length > 0) {
-      setDepartmentOptions(departments);
-    }
+    loadOptions();
   }, []);
+
+  const loadOptions = async () => {
+    try {
+      // Fetch departments and colleges from backend
+      const [depts, colleges] = await Promise.all([
+        fetchDepartments(),
+        fetchApprovedColleges(),
+      ]);
+
+      setDepartmentOptions(depts || []);
+      setCollegeOptions(colleges || []);
+    } catch (error) {
+      console.error("Error loading options:", error);
+      setError("Failed to load registration options. Please refresh.");
+    }
+  };
 
   const handleRegister = (e) => {
     e.preventDefault();
@@ -168,8 +180,8 @@ export default function StudentRegister() {
             >
               <option value="">Select Department</option>
               {departmentOptions.map((dept) => (
-                <option key={dept.dept_id || dept} value={dept.dept_id || dept}>
-                  {dept.dept_name || dept}
+                <option key={dept.deptId} value={dept.deptId}>
+                  {dept.deptName}
                 </option>
               ))}
             </select>
@@ -190,11 +202,8 @@ export default function StudentRegister() {
               >
                 <option value="">Select College</option>
                 {collegeOptions.map((option) => (
-                  <option
-                    key={option.id || option.college_id}
-                    value={option.id || option.college_id}
-                  >
-                    {option.college_name || option.name || option}
+                  <option key={option.collegeId} value={option.collegeId}>
+                    {option.collegeName}
                   </option>
                 ))}
               </select>

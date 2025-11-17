@@ -3,6 +3,7 @@ import Layout from "../../components/Layout";
 import SearchBar from "../../components/SearchBar";
 import Modal from "../../components/Modal";
 import dataService from "../../services/dataService";
+import { fetchDepartments } from "../../services/publicService";
 
 const BrowseCourses = () => {
   // Mock current user
@@ -14,17 +15,29 @@ const BrowseCourses = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [filterDepartment, setFilterDepartment] = useState("All");
+  const [departments, setDepartments] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
-    loadCourses();
+    loadCoursesAndDepartments();
   }, []);
+
+  const loadCoursesAndDepartments = async () => {
+    loadCourses();
+    try {
+      const depts = await fetchDepartments();
+      setDepartments(depts || []);
+    } catch (error) {
+      console.error("Error loading departments:", error);
+    }
+  };
 
   useEffect(() => {
     let filtered = courses;
 
     if (filterDepartment !== "All") {
-      filtered = filtered.filter((c) => c.dept_id == filterDepartment);
+      const deptId = parseInt(filterDepartment);
+      filtered = filtered.filter((c) => c.dept_id == deptId);
     }
 
     if (searchTerm) {
@@ -67,11 +80,6 @@ const BrowseCourses = () => {
     console.log("Enriched courses:", enrichedCourses); // Debug log
     setCourses(enrichedCourses);
   };
-
-  const departments = [
-    "All",
-    ...new Set(courses.map((c) => c.dept_id).filter((dept) => dept != null)),
-  ];
 
   const handleEnrollRequest = (course) => {
     setSelectedCourse(course);
@@ -131,9 +139,10 @@ const BrowseCourses = () => {
                 onChange={(e) => setFilterDepartment(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
+                <option value="All">All Departments</option>
                 {departments.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
+                  <option key={dept.deptId} value={dept.deptId}>
+                    {dept.deptName}
                   </option>
                 ))}
               </select>

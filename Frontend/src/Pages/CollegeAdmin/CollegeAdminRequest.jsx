@@ -1,39 +1,65 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { registerCollegeAdmin } from "../../services/collegeAdminService";
 
 export default function CollegeAdminRequest() {
   const nav = useNavigate();
 
   const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
     collegeName: "",
     address: "",
-    website: "",
-    adminEmail: "",
-    password: "",
-    description: "",
+    logoUrl: "",
   });
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.collegeName || !formData.adminEmail || !formData.password) {
+
+    // Validate required fields
+    if (
+      !formData.fullName ||
+      !formData.email ||
+      !formData.password ||
+      !formData.collegeName ||
+      !formData.address
+    ) {
       return setError("⚠️ Please fill all required fields.");
     }
 
-    setError("");
-    console.log("📩 Request sent:", formData);
-    setSuccess("✅ Request sent successfully! You can log in after approval.");
+    try {
+      setIsSubmitting(true);
+      setError("");
 
-    setTimeout(() => {
-      nav("/Collegeadmin/CollegeAdminlogin");
-    }, 2500);
+      await registerCollegeAdmin(formData);
+
+      setSuccess(
+        "✅ Request sent successfully! You can log in after Super Admin approval."
+      );
+
+      setTimeout(() => {
+        nav("/Collegeadmin/CollegeAdminlogin");
+      }, 2500);
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError(
+        err.response?.data?.message ||
+          "Failed to send registration request. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -53,9 +79,9 @@ export default function CollegeAdminRequest() {
           🎓 Register Your College
         </h1>
         <p className="max-w-md text-gray-200 leading-relaxed text-base md:text-lg drop-shadow-sm">
-          If your college isn’t listed yet, submit your registration request here.
-          The Super Admin will review your details and activate your college
-          account for the SIS portal.
+          If your college isn’t listed yet, submit your registration request
+          here. The Super Admin will review your details and activate your
+          college account for the SIS portal.
         </p>
         <button
           onClick={() => nav("/Collegeadmin/CollegeAdminlogin")}
@@ -72,76 +98,91 @@ export default function CollegeAdminRequest() {
             College Registration Request
           </h2>
 
-          {error && <p className="text-red-500 text-sm mb-3 text-center">{error}</p>}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
+              {error}
+            </div>
+          )}
           {success && (
-            <p className="text-green-600 text-sm mb-3 text-center">{success}</p>
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm">
+              {success}
+            </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-          >
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
             <input
               type="text"
-              name="collegeName"
-              placeholder="College Name *"
-              value={formData.collegeName}
+              name="fullName"
+              placeholder="Full Name *"
+              value={formData.fullName}
               onChange={handleChange}
-              className="col-span-2 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              disabled={isSubmitting}
+              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none disabled:opacity-50"
               required
             />
 
             <input
-              type="text"
-              name="address"
-              placeholder="Address"
-              value={formData.address}
-              onChange={handleChange}
-              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-            />
-
-            <input
-              type="text"
-              name="website"
-              placeholder="Website (optional)"
-              value={formData.website}
-              onChange={handleChange}
-              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
-            />
-
-            <input
               type="email"
-              name="adminEmail"
-              placeholder="Admin Email *"
-              value={formData.adminEmail}
+              name="email"
+              placeholder="Email Address *"
+              value={formData.email}
               onChange={handleChange}
-              className="col-span-2 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              disabled={isSubmitting}
+              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none disabled:opacity-50"
               required
             />
 
             <input
               type="password"
               name="password"
-              placeholder="Desired Password *"
+              placeholder="Password *"
               value={formData.password}
               onChange={handleChange}
-              className="col-span-2 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              disabled={isSubmitting}
+              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none disabled:opacity-50"
               required
             />
 
-            <textarea
-              name="description"
-              placeholder="Brief description (optional)"
-              value={formData.description}
+            <input
+              type="text"
+              name="collegeName"
+              placeholder="College Name *"
+              value={formData.collegeName}
               onChange={handleChange}
-              className="col-span-2 bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 h-24 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+              disabled={isSubmitting}
+              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none disabled:opacity-50"
+              required
+            />
+
+            <input
+              type="text"
+              name="address"
+              placeholder="College Address *"
+              value={formData.address}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none disabled:opacity-50"
+              required
+            />
+
+            <input
+              type="url"
+              name="logoUrl"
+              placeholder="College Logo URL (optional)"
+              value={formData.logoUrl}
+              onChange={handleChange}
+              disabled={isSubmitting}
+              className="bg-gray-50 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-400 focus:outline-none disabled:opacity-50"
             />
 
             <button
               type="submit"
-              className="col-span-2 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300"
+              disabled={isSubmitting}
+              className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Send Request to Super Admin
+              {isSubmitting
+                ? "Sending Request..."
+                : "Send Request to Super Admin"}
             </button>
           </form>
         </div>
