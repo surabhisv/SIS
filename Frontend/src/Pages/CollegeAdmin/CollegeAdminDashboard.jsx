@@ -147,23 +147,7 @@ export default function CollegeAdminDashboard() {
               Overview of your college administration
             </p>
           </div>
-          <div className="flex items-center space-x-3">
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <svg
-                className="w-6 h-6 text-gray-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-            </button>
-          </div>
+          <div className="flex items-center space-x-3"></div>
         </div>
       </div>
 
@@ -171,9 +155,9 @@ export default function CollegeAdminDashboard() {
       <div className="p-8 space-y-6">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {statCards.map((stat, index) => (
+          {statCards.map((stat) => (
             <div
-              key={index}
+              key={stat.title}
               className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
             >
               <div className={`bg-gradient-to-r ${stat.color} p-4`}>
@@ -358,9 +342,9 @@ export default function CollegeAdminDashboard() {
             </div>
             <div className="space-y-3">
               {recentEnrollments.length > 0 ? (
-                recentEnrollments.map((enrollment) => (
+                recentEnrollments.map((enrollment, index) => (
                   <div
-                    key={enrollment.enrollmentId}
+                    key={enrollment.enrollmentId || `enrollment-${index}`}
                     className="flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex-1">
@@ -431,7 +415,7 @@ export default function CollegeAdminDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {courses.map((course) => {
+                  {courses.map((course, index) => {
                     const enrolled = course.enrolledCount || 0;
                     const seatLimit = course.seatLimit || 0;
                     const available = seatLimit - enrolled;
@@ -439,7 +423,10 @@ export default function CollegeAdminDashboard() {
                       ? (enrolled / seatLimit) * 100
                       : 0;
                     return (
-                      <tr key={course.courseId} className="hover:bg-gray-50">
+                      <tr
+                        key={course.courseId || `course-${index}`}
+                        className="hover:bg-gray-50"
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-gray-900">
                             {course.courseName}
