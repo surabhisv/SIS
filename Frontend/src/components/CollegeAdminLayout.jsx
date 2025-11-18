@@ -1,15 +1,35 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { TOKEN_STORAGE_KEY } from "../config/constants";
 
 export default function CollegeAdminLayout({
   children,
   activePage = "dashboard",
 }) {
-  const currentUser = {
-    id: "admin1",
-    collegeId: "C001",
-    email: "admin@demo.com",
-  };
   const navigate = useNavigate();
+
+  // Extract user info from JWT token
+  const getUserInfo = () => {
+    try {
+      const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+      if (!token) return { email: "admin@demo.com", name: "College Admin" };
+
+      const parts = token.split(".");
+      if (parts.length !== 3)
+        return { email: "admin@demo.com", name: "College Admin" };
+
+      const payload = JSON.parse(
+        atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+      );
+      return {
+        email: payload.sub || "admin@demo.com",
+        name: payload.name || payload.sub?.split("@")[0] || "College Admin",
+      };
+    } catch (error) {
+      return { email: "admin@demo.com", name: "College Admin" };
+    }
+  };
+
+  const currentUser = getUserInfo();
   const handleLogout = () => {
     navigate("/");
   };
@@ -123,9 +143,11 @@ export default function CollegeAdminLayout({
                 />
               </svg>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">College Admin</p>
-              <p className="text-xs text-indigo-300">{currentUser.email}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{currentUser.name}</p>
+              <p className="text-xs text-indigo-300 truncate">
+                {currentUser.email}
+              </p>
             </div>
           </div>
           <button

@@ -171,9 +171,6 @@ export default function ManageCourses() {
       <div className="bg-white shadow-sm border-b border-gray-200 px-8 py-4 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Manage Courses</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            View, edit, and manage all course offerings
-          </p>
         </div>
         <Link
           to="/CollegeAdmin/AddCourse"
@@ -280,9 +277,6 @@ export default function ManageCourses() {
                       Credits
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Enrolled
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Duration
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -295,7 +289,6 @@ export default function ManageCourses() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredCourses.map((course) => {
-                    const enrolled = course.enrolledCount || 0;
                     return (
                       <tr
                         key={course.courseId}
@@ -319,11 +312,6 @@ export default function ManageCourses() {
                         <td className="px-6 py-4">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                             {course.credits} Credits
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-medium text-gray-900">
-                            {enrolled} Students
                           </span>
                         </td>
                         <td className="px-6 py-4">

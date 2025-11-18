@@ -363,35 +363,6 @@ export default function CollegeAdminDashboard() {
                     key={enrollment.enrollmentId}
                     className="flex items-start p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    <div
-                      className={`${
-                        enrollment.status === "APPROVED"
-                          ? "bg-green-100 text-green-600"
-                          : enrollment.status === "REQUESTED"
-                          ? "bg-yellow-100 text-yellow-600"
-                          : "bg-red-100 text-red-600"
-                      } rounded-full p-2 mr-3`}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d={
-                            enrollment.status === "APPROVED"
-                              ? "M5 13l4 4L19 7"
-                              : enrollment.status === "REQUESTED"
-                              ? "M12 8v4l3 3"
-                              : "M6 18L18 6M6 6l12 12"
-                          }
-                        />
-                      </svg>
-                    </div>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-gray-800">
                         {enrollment.studentName || "Unknown Student"}
@@ -452,13 +423,7 @@ export default function CollegeAdminDashboard() {
                       Department
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total Seats
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Enrolled
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Available
+                      Seat Limit
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -487,12 +452,6 @@ export default function CollegeAdminDashboard() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {seatLimit}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {enrolled}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {available}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span

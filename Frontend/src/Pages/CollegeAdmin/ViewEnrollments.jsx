@@ -255,9 +255,6 @@ export default function EnrollmentsPage() {
                           <h4 className="font-semibold text-gray-800">
                             {student.studentName || "Unknown Student"}
                           </h4>
-                          <p className="text-sm text-gray-500">
-                            {student.studentEmail || "No email"}
-                          </p>
                         </div>
                         {student.studentId && (
                           <span className="text-xs text-gray-500">
