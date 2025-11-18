@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";   // ⭐ added useLocation
+import { Link, useLocation } from "react-router-dom"; // ⭐ added useLocation
 import Layout from "../../components/Layout";
 import axios from "axios";
 import { API_BASE_URL, TOKEN_STORAGE_KEY } from "../../config/constants";
@@ -11,15 +11,17 @@ const SuperAdminDashboard = () => {
     approved: 0,
     rejected: 0,
   });
+  const [loading, setLoading] = useState(true);
 
-  const location = useLocation();  // ⭐ detect page navigation
+  const location = useLocation(); // ⭐ detect page navigation
 
   useEffect(() => {
     loadStats();
-  }, [location.pathname]);   // ⭐ re-run whenever dashboard becomes active
+  }, [location.pathname]); // ⭐ re-run whenever dashboard becomes active
 
   const loadStats = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem(TOKEN_STORAGE_KEY);
 
       // 1️⃣ Fetch REQUESTS → pending + rejected + approved
@@ -55,6 +57,8 @@ const SuperAdminDashboard = () => {
       });
     } catch (err) {
       console.error("Error loading super admin stats:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,6 +88,19 @@ const SuperAdminDashboard = () => {
       color: "bg-purple-500",
     },
   ];
+
+  if (loading) {
+    return (
+      <Layout role="superadmin" userName="Super Admin">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout role="superadmin" userName="Super Admin">
