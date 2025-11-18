@@ -30,9 +30,9 @@ const StudentProfile = () => {
       const profile = await fetchStudentProfile();
       setCurrentUser(profile);
       setFormData({
-        fullName: profile.fullName,
-        phone: profile.phone,
-        address: profile.address,
+        fullName: profile.fullName || "",
+        phone: profile.phone || "",
+        address: profile.address || "",
       });
     } catch (error) {
       console.error("Error loading profile:", error);
@@ -45,9 +45,9 @@ const StudentProfile = () => {
   const handleEditClick = () => {
     // Reset form data to current user values when opening modal
     setFormData({
-      fullName: currentUser.fullName,
-      phone: currentUser.phone,
-      address: currentUser.address,
+      fullName: currentUser.fullName || "",
+      phone: currentUser.phone || "",
+      address: currentUser.address || "",
     });
     setIsEditing(true);
   };
@@ -151,7 +151,7 @@ const StudentProfile = () => {
         {/* Profile Card */}
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-blue-800 h-32"></div>
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-6 pt-2">
             <div className="flex items-end -mt-16 mb-6">
               <div className="bg-white rounded-full p-2 shadow-lg">
                 <div className="bg-blue-100 text-blue-600 rounded-full p-6">
@@ -175,7 +175,7 @@ const StudentProfile = () => {
                   {currentUser.fullName}
                 </h2>
                 <p className="text-gray-600">
-                  {currentUser.deptName || "Department"}
+                  {currentUser.departmentName || "Department"}
                 </p>
                 <div className="flex items-center space-x-4 mt-2">
                   <span
@@ -247,7 +247,7 @@ const StudentProfile = () => {
                   <div>
                     <label className="text-sm text-gray-500">Department</label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.deptName || "N/A"}
+                      {currentUser.departmentName || "N/A"}
                     </p>
                   </div>
                   <div>
@@ -255,8 +255,10 @@ const StudentProfile = () => {
                       Registration Date
                     </label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.createdAt
-                        ? new Date(currentUser.createdAt).toLocaleDateString()
+                      {currentUser.registrationDate
+                        ? new Date(
+                            currentUser.registrationDate
+                          ).toLocaleDateString()
                         : "N/A"}
                     </p>
                   </div>

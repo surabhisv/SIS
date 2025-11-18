@@ -1,8 +1,56 @@
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { TOKEN_STORAGE_KEY } from "../config/constants";
+import { fetchStudentProfile } from "../services/studentService";
 
 const Sidebar = ({ role, userName = "User" }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState({ name: userName, email: "" });
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      if (role === "student") {
+        try {
+          const profile = await fetchStudentProfile();
+          setCurrentUser({
+            name: profile.fullName || userName,
+            email: profile.email || "",
+          });
+        } catch (error) {
+          // Fallback to JWT token if API fails
+          const userInfo = getUserInfoFromToken();
+          setCurrentUser(userInfo);
+        }
+      } else {
+        // For non-student roles, use JWT token
+        const userInfo = getUserInfoFromToken();
+        setCurrentUser(userInfo);
+      }
+    };
+
+    loadUserInfo();
+  }, [role]);
+
+  // Extract user info from JWT token (fallback)
+  const getUserInfoFromToken = () => {
+    try {
+      const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+      if (!token) return { email: "", name: userName };
+
+      const parts = token.split(".");
+      if (parts.length !== 3) return { email: "", name: userName };
+
+      const payload = JSON.parse(
+        atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+      );
+      const email = payload.sub || "";
+      const name = payload.name || email.split("@")[0] || userName;
+      return { email, name };
+    } catch (error) {
+      return { email: "", name: userName };
+    }
+  };
 
   const isActive = (path) => {
     return location.pathname === path;
@@ -147,9 +195,16 @@ const Sidebar = ({ role, userName = "User" }) => {
               />
             </svg>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-800">{userName}</p>
-            <p className="text-xs text-gray-500">{getRoleName()}</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-800 truncate">
+              {currentUser.name}
+            </p>
+            {currentUser.email && (
+              <p className="text-xs text-gray-500 truncate">
+                {currentUser.email}
+              </p>
+            )}
+            <p className="text-xs text-gray-400">{getRoleName()}</p>
           </div>
         </div>
 

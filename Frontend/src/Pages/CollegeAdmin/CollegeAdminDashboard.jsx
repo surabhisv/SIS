@@ -57,10 +57,10 @@ export default function CollegeAdminDashboard() {
     }
   };
 
-  const getCourseEnrollmentCount = (courseId) => {
-    const course = courses.find((c) => c.courseId === courseId);
-    return course?.enrolledCount || 0;
-  };
+  // const getCourseEnrollmentCount = (courseId) => {
+  //   const course = courses.find((c) => c.courseId === courseId);
+  //   return course?.enrolledCount || 0;
+  // };
 
   const statCards = [
     {
@@ -418,7 +418,6 @@ export default function CollegeAdminDashboard() {
                   {courses.map((course, index) => {
                     const enrolled = course.enrolledCount || 0;
                     const seatLimit = course.seatLimit || 0;
-                    const available = seatLimit - enrolled;
                     const percentFilled = seatLimit
                       ? (enrolled / seatLimit) * 100
                       : 0;

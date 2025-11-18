@@ -124,8 +124,7 @@ const BrowseCourses = () => {
 
         {showSuccess && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-            Enrollment request submitted successfully! Waiting for admin
-            approval.
+            Successfully enrolled in the course!
           </div>
         )}
 
@@ -204,21 +203,26 @@ const BrowseCourses = () => {
                     {course.credits || 0} Credits
                   </span>
                   <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-100 text-blue-800">
-                    Seats Available: {course.seatsAvailable || 0} /{" "}
-                    {course.seatLimit || 0}
+                    Seat Limit: {course.seatLimit || 0}
                   </span>
                 </div>
 
                 <button
                   onClick={() => handleEnrollRequest(course)}
-                  disabled={course.isFull}
+                  disabled={
+                    course.isFull || course.enrollmentStatus === "ENROLLED"
+                  }
                   className={`w-full py-2 rounded-lg font-semibold transition duration-200 ${
-                    course.isFull
+                    course.isFull || course.enrollmentStatus === "ENROLLED"
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
                 >
-                  {course.isFull ? "Course Full" : "Request Enrollment"}
+                  {course.enrollmentStatus === "ENROLLED"
+                    ? "Already Enrolled"
+                    : course.isFull
+                    ? "Course Full"
+                    : "Enroll Now"}
                 </button>
               </div>
             </div>
@@ -254,7 +258,7 @@ const BrowseCourses = () => {
       <Modal
         isOpen={showEnrollModal}
         onClose={() => !enrolling && setShowEnrollModal(false)}
-        title="Confirm Enrollment Request"
+        title="Confirm Enrollment"
       >
         {selectedCourse && (
           <div className="space-y-4">
@@ -286,16 +290,13 @@ const BrowseCourses = () => {
                   <strong>Credits:</strong> {selectedCourse.credits || "N/A"}
                 </li>
                 <li>
-                  <strong>Seats Available:</strong>{" "}
-                  {selectedCourse.seatsAvailable || 0} /{" "}
-                  {selectedCourse.seatLimit || 0}
+                  <strong>Seat Limit:</strong> {selectedCourse.seatLimit || 0}
                 </li>
               </ul>
             </div>
 
             <p className="text-sm text-gray-600">
-              Your enrollment request will be sent to the admin for approval.
-              You will be notified once it has been reviewed.
+              You will be enrolled in this course immediately upon confirmation.
             </p>
 
             <div className="flex justify-end space-x-3 mt-6">
@@ -311,7 +312,7 @@ const BrowseCourses = () => {
                 disabled={enrolling}
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed"
               >
-                {enrolling ? "Enrolling..." : "Confirm Request"}
+                {enrolling ? "Enrolling..." : "Confirm Enrollment"}
               </button>
             </div>
           </div>

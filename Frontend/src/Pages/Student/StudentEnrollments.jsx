@@ -43,22 +43,14 @@ const StudentEnrollments = () => {
 
   const columns = [
     {
-      header: "Course ID",
-      accessor: "courseId",
-      render: (row) => row.courseId || "N/A",
-    },
-    {
       header: "Course Name",
       accessor: "courseName",
       render: (row) => row.courseName || "N/A",
     },
     {
-      header: "Description",
-      accessor: "description",
-      render: (row) => {
-        const desc = row.description || "N/A";
-        return desc.length > 50 ? desc.substring(0, 50) + "..." : desc;
-      },
+      header: "Department",
+      accessor: "departmentName",
+      render: (row) => row.departmentName || "N/A",
     },
     {
       header: "Credits",
@@ -71,6 +63,14 @@ const StudentEnrollments = () => {
       render: (row) =>
         row.requestedAt
           ? new Date(row.requestedAt).toLocaleDateString()
+          : "N/A",
+    },
+    {
+      header: "Approval Date",
+      accessor: "approvalDate",
+      render: (row) =>
+        row.approvalDate
+          ? new Date(row.approvalDate).toLocaleDateString()
           : "N/A",
     },
     {

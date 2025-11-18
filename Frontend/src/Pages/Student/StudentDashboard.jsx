@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
-import { fetchStudentDashboard } from "../../services/studentService";
+import {
+  fetchStudentDashboard,
+  fetchStudentProfile,
+} from "../../services/studentService";
 
 const StudentDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
+  const [userName, setUserName] = useState("Student");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -16,8 +20,15 @@ const StudentDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchStudentDashboard();
-      setDashboardData(data);
+
+      // Fetch both dashboard and profile data in parallel
+      const [dashboardResponse, profileResponse] = await Promise.all([
+        fetchStudentDashboard(),
+        fetchStudentProfile(),
+      ]);
+
+      setDashboardData(dashboardResponse);
+      setUserName(profileResponse?.fullName || "Student");
     } catch (error) {
       console.error("Error loading dashboard:", error);
       setError("Failed to load dashboard data. Please try again.");
@@ -90,7 +101,7 @@ const StudentDashboard = () => {
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, Student!</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome back, {userName}!</h1>
           <p className="text-blue-100">
             Here's what's happening with your academic journey today.
           </p>
@@ -170,19 +181,11 @@ const StudentDashboard = () => {
                   <p className="text-sm text-gray-600 mt-1">
                     Course ID: {course.courseId || "N/A"}
                   </p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm text-gray-500 line-clamp-2">
-                      {course.description || "No description available"}
-                    </span>
-                    <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded whitespace-nowrap ml-2">
+                  <div className="mt-3">
+                    <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
                       {course.credits || 0} Credits
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {course.startDate && course.endDate
-                      ? `${course.startDate} - ${course.endDate}`
-                      : "Schedule TBD"}
-                  </p>
                 </div>
               ))}
             </div>
