@@ -2,33 +2,39 @@ import { useState, useEffect } from "react";
 import Layout from "../../components/Layout";
 import SearchBar from "../../components/SearchBar";
 import Modal from "../../components/Modal";
-import dataService from "../../services/dataService";
-import { fetchDepartments } from "../../services/publicService";
+import {
+  fetchAvailableCourses,
+  enrollInCourse,
+} from "../../services/studentService";
 
 const BrowseCourses = () => {
-  // Mock current user
-  const currentUser = { id: "S1001", studentId: "S1001", name: "Sneha Rao" };
-
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [filterDepartment, setFilterDepartment] = useState("All");
-  const [departments, setDepartments] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
     loadCoursesAndDepartments();
   }, []);
 
   const loadCoursesAndDepartments = async () => {
-    loadCourses();
     try {
-      const depts = await fetchDepartments();
-      setDepartments(depts || []);
+      setLoading(true);
+      setError(null);
+      const coursesData = await fetchAvailableCourses();
+      // API returns array directly, not an object with courses property
+      setCourses(Array.isArray(coursesData) ? coursesData : []);
     } catch (error) {
-      console.error("Error loading departments:", error);
+      console.error("Error loading data:", error);
+      setError("Failed to load courses. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -36,77 +42,77 @@ const BrowseCourses = () => {
     let filtered = courses;
 
     if (filterDepartment !== "All") {
-      const deptId = parseInt(filterDepartment);
-      filtered = filtered.filter((c) => c.dept_id == deptId);
+      filtered = filtered.filter((c) => c.departmentName === filterDepartment);
     }
 
     if (searchTerm) {
       const lowered = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (c) =>
-          (c.course_name && c.course_name.toLowerCase().includes(lowered)) ||
+          (c.courseName && c.courseName.toLowerCase().includes(lowered)) ||
           (c.description && c.description.toLowerCase().includes(lowered)) ||
-          (c.course_id && c.course_id.toString().includes(lowered))
+          (c.courseId && c.courseId.toString().includes(lowered))
       );
     }
 
     setFilteredCourses(filtered);
   }, [searchTerm, filterDepartment, courses]);
 
-  const loadCourses = () => {
-    const allCourses = dataService.getAll("courses");
-    console.log("Loaded courses:", allCourses); // Debug log
-
-    const enrichedCourses = allCourses.map((course) => {
-      const enrollments = dataService.getEnrollmentsByCourse(
-        course.course_id || course.id
-      );
-      const approvedCount = enrollments.filter(
-        (enrollment) =>
-          enrollment.status === "Approved" || enrollment.status === "APPROVED"
-      ).length;
-      const seatLimit = course.seat_limit ?? 0;
-      const seatsAvailable = Math.max(seatLimit - approvedCount, 0);
-
-      return {
-        ...course,
-        seatLimit,
-        seatsAvailable,
-        approvedCount,
-        isFull: seatLimit > 0 ? seatsAvailable <= 0 : false,
-      };
-    });
-
-    console.log("Enriched courses:", enrichedCourses); // Debug log
-    setCourses(enrichedCourses);
-  };
-
   const handleEnrollRequest = (course) => {
     setSelectedCourse(course);
     setShowEnrollModal(true);
   };
 
-  const confirmEnrollment = () => {
-    const newEnrollment = {
-      enrollment_id: Date.now(),
-      student_id: currentUser.studentId,
-      course_id: selectedCourse.course_id || selectedCourse.id,
-      status: "REQUESTED",
-      requested_at: new Date().toISOString(),
-      approved_by: null,
-      approval_date: null,
-    };
-
-    dataService.create("enrollments", newEnrollment);
-    setShowEnrollModal(false);
-    setSelectedCourse(null);
-    setShowSuccess(true);
-    loadCourses();
-    setTimeout(() => setShowSuccess(false), 3000);
+  const confirmEnrollment = async () => {
+    try {
+      setEnrolling(true);
+      await enrollInCourse(selectedCourse.courseId);
+      setShowEnrollModal(false);
+      setSelectedCourse(null);
+      setShowSuccess(true);
+      loadCoursesAndDepartments(); // Reload courses to update seat availability
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error enrolling in course:", error);
+      alert(
+        error.response?.data?.message || "Failed to enroll. Please try again."
+      );
+    } finally {
+      setEnrolling(false);
+    }
   };
 
+  if (loading) {
+    return (
+      <Layout userName="Student">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading courses...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout userName="Student">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+          <button
+            onClick={loadCoursesAndDepartments}
+            className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout userName={currentUser.name}>
+    <Layout userName="Student">
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -140,11 +146,13 @@ const BrowseCourses = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="All">All Departments</option>
-                {departments.map((dept) => (
-                  <option key={dept.deptId} value={dept.deptId}>
-                    {dept.deptName}
-                  </option>
-                ))}
+                {[...new Set(courses.map((c) => c.departmentName))]
+                  .filter(Boolean)
+                  .map((deptName) => (
+                    <option key={deptName} value={deptName}>
+                      {deptName}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
@@ -154,21 +162,18 @@ const BrowseCourses = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
             <div
-              key={course.course_id || course.id}
+              key={course.courseId}
               className="bg-white rounded-xl shadow-md hover:shadow-lg transition duration-200 overflow-hidden"
             >
               <div className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-4">
                 <h3 className="text-lg font-bold">
-                  Course ID: {course.course_id || course.id || "N/A"}
+                  {course.courseName || "Course Name"}
                 </h3>
                 <p className="text-blue-100 text-sm">
-                  Dept ID: {course.dept_id || "N/A"}
+                  Course ID: {course.courseId}
                 </p>
               </div>
               <div className="p-4">
-                <h4 className="font-semibold text-gray-800 mb-2">
-                  {course.course_name || course.name || "Unnamed Course"}
-                </h4>
                 <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                   {course.description || "No description available"}
                 </p>
@@ -188,8 +193,8 @@ const BrowseCourses = () => {
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    {course.start_date && course.end_date
-                      ? `${course.start_date} - ${course.end_date}`
+                    {course.startDate && course.endDate
+                      ? `${course.startDate} - ${course.endDate}`
                       : "Dates TBD"}
                   </div>
                 </div>
@@ -248,18 +253,17 @@ const BrowseCourses = () => {
       {/* Enrollment Confirmation Modal */}
       <Modal
         isOpen={showEnrollModal}
-        onClose={() => setShowEnrollModal(false)}
+        onClose={() => !enrolling && setShowEnrollModal(false)}
         title="Confirm Enrollment Request"
       >
         {selectedCourse && (
           <div className="space-y-4">
             <div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {selectedCourse.course_name || selectedCourse.name || "Course"}
+                {selectedCourse.courseName || "Course"}
               </h3>
               <p className="text-gray-600">
-                Course ID:{" "}
-                {selectedCourse.course_id || selectedCourse.id || "N/A"}
+                Course ID: {selectedCourse.courseId || "N/A"}
               </p>
             </div>
 
@@ -274,16 +278,17 @@ const BrowseCourses = () => {
                 </li>
                 <li>
                   <strong>Duration:</strong>{" "}
-                  {selectedCourse.start_date && selectedCourse.end_date
-                    ? `${selectedCourse.start_date} - ${selectedCourse.end_date}`
+                  {selectedCourse.startDate && selectedCourse.endDate
+                    ? `${selectedCourse.startDate} - ${selectedCourse.endDate}`
                     : "Dates TBD"}
                 </li>
                 <li>
                   <strong>Credits:</strong> {selectedCourse.credits || "N/A"}
                 </li>
                 <li>
-                  <strong>Department ID:</strong>{" "}
-                  {selectedCourse.dept_id || "N/A"}
+                  <strong>Seats Available:</strong>{" "}
+                  {selectedCourse.seatsAvailable || 0} /{" "}
+                  {selectedCourse.seatLimit || 0}
                 </li>
               </ul>
             </div>
@@ -296,15 +301,17 @@ const BrowseCourses = () => {
             <div className="flex justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowEnrollModal(false)}
-                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-200"
+                disabled={enrolling}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmEnrollment}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+                disabled={enrolling}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed"
               >
-                Confirm Request
+                {enrolling ? "Enrolling..." : "Confirm Request"}
               </button>
             </div>
           </div>

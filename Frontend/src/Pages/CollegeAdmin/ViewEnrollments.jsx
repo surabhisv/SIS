@@ -21,11 +21,20 @@ export default function EnrollmentsPage() {
       // Fetch dashboard data which should include enrollment information
       const dashboardData = await fetchDashboard();
 
-      // Process enrollment data if available
-      if (dashboardData?.enrollmentsByDepartment) {
+      // Process enrollment data - API returns recentEnrollments array
+      if (
+        dashboardData?.recentEnrollments &&
+        Array.isArray(dashboardData.recentEnrollments)
+      ) {
+        // Group the enrollments by department (we'll need to add department info or group by course)
+        // For now, we'll use course name as a grouping since department isn't in recentEnrollments
+        const grouped = groupEnrollmentsByCourse(
+          dashboardData.recentEnrollments
+        );
+        setEnrollmentInfo(grouped);
+      } else if (dashboardData?.enrollmentsByDepartment) {
         setEnrollmentInfo(dashboardData.enrollmentsByDepartment);
       } else if (dashboardData?.allEnrollments) {
-        // If the API returns a flat list, we'll need to group by department
         const grouped = groupEnrollmentsByDepartment(
           dashboardData.allEnrollments
         );
@@ -39,6 +48,30 @@ export default function EnrollmentsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const groupEnrollmentsByCourse = (enrollments) => {
+    const grouped = {};
+
+    enrollments.forEach((enrollment) => {
+      const course = enrollment.courseName || "Uncategorized";
+      if (!grouped[course]) {
+        grouped[course] = [];
+      }
+      grouped[course].push({
+        studentId: enrollment.studentId,
+        studentName: enrollment.studentName,
+        studentEmail: enrollment.studentEmail,
+        courseName: enrollment.courseName,
+        credits: enrollment.credits,
+        enrolledAt: enrollment.enrollmentDate, // API uses enrollmentDate not enrolledAt
+      });
+    });
+
+    return Object.entries(grouped).map(([course, students]) => ({
+      department: course, // Using course name as department for display
+      students: students,
+    }));
   };
 
   const groupEnrollmentsByDepartment = (enrollments) => {
@@ -141,11 +174,9 @@ export default function EnrollmentsPage() {
   return (
     <CollegeAdminLayout activePage="enrollments">
       <div className="bg-white shadow-sm border-b border-gray-200 px-8 py-4">
-        <h2 className="text-2xl font-bold text-gray-800">
-          Enrollments by Department
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-800">Course Enrollments</h2>
         <p className="text-sm text-gray-500 mt-1">
-          Expand a department to view students and their enrolled courses
+          Expand a course to view enrolled students
         </p>
       </div>
 
@@ -168,7 +199,7 @@ export default function EnrollmentsPage() {
             </svg>
             <input
               type="text"
-              placeholder="Search by student name, email, or department..."
+              placeholder="Search by student name, email, or course..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"

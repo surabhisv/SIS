@@ -32,10 +32,11 @@ export default function ManageCourses() {
       ]);
 
       setCourses(coursesData || []);
-      setDepartments(depts || []);
+      setDepartments(Array.isArray(depts) ? depts : []);
     } catch (error) {
       console.error("Error loading data:", error);
       setError("Failed to load courses. Please try again.");
+      setDepartments([]);
     } finally {
       setLoading(false);
     }
@@ -227,11 +228,12 @@ export default function ManageCourses() {
               className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <option value="all">All Departments</option>
-              {departments.map((dept) => (
-                <option key={dept.deptId} value={dept.deptId}>
-                  {dept.deptName}
-                </option>
-              ))}
+              {Array.isArray(departments) &&
+                departments.map((dept) => (
+                  <option key={dept.deptId} value={dept.deptId}>
+                    {dept.deptName}
+                  </option>
+                ))}
             </select>
           </div>
         </div>

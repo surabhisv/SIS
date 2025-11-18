@@ -4,6 +4,7 @@ import {
   fetchDepartments,
   fetchApprovedColleges,
 } from "../../services/publicService";
+import { registerStudent } from "../../services/studentService";
 
 export default function StudentRegister() {
   const nav = useNavigate();
@@ -23,6 +24,7 @@ export default function StudentRegister() {
   const [department, setDepartment] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     loadOptions();
@@ -44,7 +46,7 @@ export default function StudentRegister() {
     }
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
 
     //check for empty fields and password match
@@ -66,33 +68,36 @@ export default function StudentRegister() {
       return;
     }
 
-    setError("");
-    setSuccess(true);
+    try {
+      setLoading(true);
+      setError("");
 
-    // Payload includes both user and student details - ready for backend integration
-    const selectedCollegeId = college || collegeFromLogin;
-    const registrationPayload = {
-      user: {
-        full_name: name,
+      const selectedCollegeId = college || collegeFromLogin;
+      const registrationPayload = {
+        fullName: name,
         email,
         password,
-        role: "STUDENT",
-        college_id: selectedCollegeId || null,
-        status: "PENDING",
-      },
-      student: {
+        collegeId: parseInt(selectedCollegeId),
+        deptId: parseInt(department),
         phone,
         address,
-        dept_id: department,
-        college_id: selectedCollegeId || null,
-        approval_status: "PENDING",
-      },
-    };
+      };
 
-    console.log("Registration payload", registrationPayload);
-    setTimeout(() => {
-      nav("/student/Studentlogin");
-    }, 2000);
+      await registerStudent(registrationPayload);
+      setSuccess(true);
+
+      setTimeout(() => {
+        nav("/student/Studentlogin");
+      }, 2000);
+    } catch (error) {
+      console.error("Registration error:", error);
+      setError(
+        error.response?.data?.message ||
+          "Registration failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -213,9 +218,10 @@ export default function StudentRegister() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300 text-sm"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium py-2.5 rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-600 transition-all duration-300 text-sm disabled:from-indigo-400 disabled:to-indigo-400 disabled:cursor-not-allowed"
             >
-              Register
+              {loading ? "Registering..." : "Register"}
             </button>
           </form>
         )}

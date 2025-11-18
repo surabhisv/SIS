@@ -1,68 +1,96 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Layout from "../../components/Layout";
-import dataService from "../../services/dataService";
+import { fetchStudentDashboard } from "../../services/studentService";
 
 const StudentDashboard = () => {
-  // Mock current user - hardcoded student data
-  const currentUser = {
-    id: "S1001",
-    fullName: "Sneha Rao",
-  };
-
-  const [enrollments, setEnrollments] = useState([]);
-  const [courses, setCourses] = useState([]);
-
-  const loadData = useCallback(() => {
-    const allEnrollments = dataService.getEnrollmentsByStudent(currentUser.id);
-    const allCourses = dataService.getAll("courses");
-
-    const enrolledCourses = allEnrollments
-      .filter((e) => e.status === "APPROVED" || e.status === "Approved")
-      .map((e) => {
-        const course = allCourses.find(
-          (c) => (c.course_id || c.id) === (e.course_id || e.courseId)
-        );
-        return { ...e, course };
-      });
-
-    setEnrollments(enrolledCourses);
-    setCourses(allCourses);
-  }, [currentUser.id]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchStudentDashboard();
+      setDashboardData(data);
+    } catch (error) {
+      console.error("Error loading dashboard:", error);
+      setError("Failed to load dashboard data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Layout userName="Student">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout userName="Student">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+          <button
+            onClick={loadData}
+            className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Calculate stats from dashboard data
+  const enrolledCoursesCount = dashboardData?.enrolledCourses?.length || 0;
+  const availableCoursesCount = dashboardData?.availableCourses?.length || 0;
+  const totalCredits =
+    dashboardData?.enrolledCourses?.reduce(
+      (sum, course) => sum + (course.credits || 0),
+      0
+    ) || 0;
 
   const stats = [
     {
       title: "Enrolled Courses",
-      value: enrollments.length,
+      value: enrolledCoursesCount,
       icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
       color: "bg-blue-500",
     },
     {
       title: "Total Credits",
-      value: enrollments.reduce((sum, e) => sum + (e.course?.credits || 0), 0),
+      value: totalCredits,
       icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z",
       color: "bg-green-500",
     },
     {
       title: "Available Courses",
-      value: courses.length,
+      value: availableCoursesCount,
       icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
       color: "bg-purple-500",
     },
   ];
 
   return (
-    <Layout userName={currentUser.fullName}>
+    <Layout userName="Student">
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome back, {currentUser.fullName}!
-          </h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome back, Student!</h1>
           <p className="text-blue-100">
             Here's what's happening with your academic journey today.
           </p>
@@ -106,7 +134,8 @@ const StudentDashboard = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Current Enrollments
           </h2>
-          {enrollments.length === 0 ? (
+          {!dashboardData?.enrolledCourses ||
+          dashboardData.enrolledCourses.length === 0 ? (
             <div className="text-center py-12">
               <svg
                 className="mx-auto h-12 w-12 text-gray-400"
@@ -130,30 +159,28 @@ const StudentDashboard = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {enrollments.slice(0, 4).map((enrollment) => (
+              {dashboardData.enrolledCourses.slice(0, 4).map((course) => (
                 <div
-                  key={enrollment.enrollment_id || enrollment.id}
+                  key={course.courseId}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition duration-200"
                 >
                   <h3 className="font-semibold text-lg text-gray-800">
-                    {enrollment.course?.course_name || "Course Name"}
+                    {course.courseName || "Course Name"}
                   </h3>
                   <p className="text-sm text-gray-600 mt-1">
-                    Course ID: {enrollment.course?.course_id || "N/A"}
+                    Course ID: {course.courseId || "N/A"}
                   </p>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-sm text-gray-500 line-clamp-2">
-                      {enrollment.course?.description ||
-                        "No description available"}
+                      {course.description || "No description available"}
                     </span>
                     <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded whitespace-nowrap ml-2">
-                      {enrollment.course?.credits || 0} Credits
+                      {course.credits || 0} Credits
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
-                    {enrollment.course?.start_date &&
-                    enrollment.course?.end_date
-                      ? `${enrollment.course.start_date} - ${enrollment.course.end_date}`
+                    {course.startDate && course.endDate
+                      ? `${course.startDate} - ${course.endDate}`
                       : "Schedule TBD"}
                   </p>
                 </div>

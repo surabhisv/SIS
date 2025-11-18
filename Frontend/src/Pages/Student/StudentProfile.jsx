@@ -1,30 +1,46 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Layout from "../../components/Layout";
 import Modal from "../../components/Modal";
+import {
+  fetchStudentProfile,
+  updateStudentProfile,
+} from "../../services/studentService";
 
 const StudentProfile = () => {
-  // Mock current user - based on actual database schema
-  const [currentUser, setCurrentUser] = useState({
-    student_id: "STU001",
-    fullName: "Final Test Student",
-    email: "final.test.student@gmail.com",
-    phone: "5555555555",
-    address: "1 Final Test Rd",
-    college_id: 1,
-    collegeName: "Engineering College", // Will be fetched from colleges table
-    dept_id: 1,
-    deptName: "Computer Science", // Will be fetched from department table
-    approval_status: "APPROVED",
-    created_at: "2024-01-15",
-  });
-
+  const [currentUser, setCurrentUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: currentUser.fullName,
-    phone: currentUser.phone,
-    address: currentUser.address,
+    fullName: "",
+    phone: "",
+    address: "",
   });
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const profile = await fetchStudentProfile();
+      setCurrentUser(profile);
+      setFormData({
+        fullName: profile.fullName,
+        phone: profile.phone,
+        address: profile.address,
+      });
+    } catch (error) {
+      console.error("Error loading profile:", error);
+      setError("Failed to load profile. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEditClick = () => {
     // Reset form data to current user values when opening modal
@@ -41,21 +57,58 @@ const StudentProfile = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Make API call to update student profile
-    // Allow student to edit basic contact information
-    setCurrentUser((prev) => ({
-      ...prev,
-      fullName: formData.fullName,
-      phone: formData.phone,
-      address: formData.address,
-    }));
-    console.log("Updated data:", formData);
-    setIsEditing(false);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
+    try {
+      setUpdating(true);
+      await updateStudentProfile(formData);
+      setCurrentUser((prev) => ({
+        ...prev,
+        fullName: formData.fullName,
+        phone: formData.phone,
+        address: formData.address,
+      }));
+      setIsEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert("Failed to update profile. Please try again.");
+    } finally {
+      setUpdating(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <Layout userName="Student">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading profile...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout userName="Student">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+          <button
+            onClick={loadProfile}
+            className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!currentUser) return null;
 
   return (
     <Layout userName={currentUser.fullName}>
@@ -121,18 +174,20 @@ const StudentProfile = () => {
                 <h2 className="text-2xl font-bold text-gray-800">
                   {currentUser.fullName}
                 </h2>
-                <p className="text-gray-600">{currentUser.deptName}</p>
+                <p className="text-gray-600">
+                  {currentUser.deptName || "Department"}
+                </p>
                 <div className="flex items-center space-x-4 mt-2">
                   <span
                     className={`text-sm font-semibold px-3 py-1 rounded-full ${
-                      currentUser.approval_status === "APPROVED"
+                      currentUser.approvalStatus === "APPROVED"
                         ? "bg-green-100 text-green-800"
-                        : currentUser.approval_status === "PENDING"
+                        : currentUser.approvalStatus === "PENDING"
                         ? "bg-yellow-100 text-yellow-800"
                         : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {currentUser.approval_status}
+                    {currentUser.approvalStatus || "PENDING"}
                   </span>
                 </div>
               </div>
@@ -148,7 +203,7 @@ const StudentProfile = () => {
                   <div>
                     <label className="text-sm text-gray-500">Student ID</label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.student_id}
+                      {currentUser.studentId || "N/A"}
                     </p>
                   </div>
                   <div>
@@ -186,13 +241,13 @@ const StudentProfile = () => {
                   <div>
                     <label className="text-sm text-gray-500">College</label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.collegeName}
+                      {currentUser.collegeName || "N/A"}
                     </p>
                   </div>
                   <div>
                     <label className="text-sm text-gray-500">Department</label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.deptName}
+                      {currentUser.deptName || "N/A"}
                     </p>
                   </div>
                   <div>
@@ -200,7 +255,9 @@ const StudentProfile = () => {
                       Registration Date
                     </label>
                     <p className="text-gray-800 font-medium">
-                      {new Date(currentUser.created_at).toLocaleDateString()}
+                      {currentUser.createdAt
+                        ? new Date(currentUser.createdAt).toLocaleDateString()
+                        : "N/A"}
                     </p>
                   </div>
                   <div>
@@ -208,7 +265,7 @@ const StudentProfile = () => {
                       Approval Status
                     </label>
                     <p className="text-gray-800 font-medium">
-                      {currentUser.approval_status}
+                      {currentUser.approvalStatus || "N/A"}
                     </p>
                   </div>
                 </div>
@@ -291,9 +348,10 @@ const StudentProfile = () => {
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+              disabled={updating}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200 disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
-              Save Changes
+              {updating ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

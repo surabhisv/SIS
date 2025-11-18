@@ -1,36 +1,31 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Layout from "../../components/Layout";
 import Table from "../../components/Table";
-import dataService from "../../services/dataService";
+import { fetchStudentEnrollments } from "../../services/studentService";
 
 const StudentEnrollments = () => {
-  // Mock current user
-  const currentUser = { id: "S1001", studentId: "S1001", name: "Sneha Rao" };
-
   const [enrollments, setEnrollments] = useState([]);
-
-  const loadEnrollments = useCallback(() => {
-    const myEnrollments = dataService.getEnrollmentsByStudent(currentUser.id);
-    const allCourses = dataService.getAll("courses");
-
-    console.log("My enrollments:", myEnrollments); // Debug log
-    console.log("All courses:", allCourses); // Debug log
-
-    const enrichedEnrollments = myEnrollments.map((e) => {
-      const course = allCourses.find(
-        (c) => (c.course_id || c.id) === (e.course_id || e.courseId)
-      );
-      console.log(`Enrollment ${e.enrollment_id}: course found:`, course); // Debug log
-      return { ...e, course };
-    });
-
-    console.log("Enriched enrollments:", enrichedEnrollments); // Debug log
-    setEnrollments(enrichedEnrollments);
-  }, [currentUser.id]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     loadEnrollments();
-  }, [loadEnrollments]);
+  }, []);
+
+  const loadEnrollments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchStudentEnrollments();
+      // API returns array directly, not an object with enrollments property
+      setEnrollments(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error loading enrollments:", error);
+      setError("Failed to load enrollments. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const colors = {
@@ -49,33 +44,33 @@ const StudentEnrollments = () => {
   const columns = [
     {
       header: "Course ID",
-      accessor: "course",
-      render: (row) => row.course?.course_id || row.course?.id || "N/A",
+      accessor: "courseId",
+      render: (row) => row.courseId || "N/A",
     },
     {
       header: "Course Name",
-      accessor: "course",
-      render: (row) => row.course?.course_name || row.course?.name || "N/A",
+      accessor: "courseName",
+      render: (row) => row.courseName || "N/A",
     },
     {
       header: "Description",
-      accessor: "course",
+      accessor: "description",
       render: (row) => {
-        const desc = row.course?.description || "N/A";
+        const desc = row.description || "N/A";
         return desc.length > 50 ? desc.substring(0, 50) + "..." : desc;
       },
     },
     {
       header: "Credits",
-      accessor: "course",
-      render: (row) => row.course?.credits || "N/A",
+      accessor: "credits",
+      render: (row) => row.credits || "N/A",
     },
     {
       header: "Request Date",
-      accessor: "requested_at",
+      accessor: "requestedAt",
       render: (row) =>
-        row.requested_at
-          ? new Date(row.requested_at).toLocaleDateString()
+        row.requestedAt
+          ? new Date(row.requestedAt).toLocaleDateString()
           : "N/A",
     },
     {
@@ -91,19 +86,42 @@ const StudentEnrollments = () => {
 
   const stats = {
     total: enrollments.length,
-    approved: enrollments.filter(
-      (e) => e.status === "Approved" || e.status === "APPROVED"
-    ).length,
-    pending: enrollments.filter(
-      (e) => e.status === "Pending" || e.status === "REQUESTED"
-    ).length,
-    rejected: enrollments.filter(
-      (e) => e.status === "Rejected" || e.status === "REJECTED"
-    ).length,
+    approved: enrollments.filter((e) => e.status === "APPROVED").length,
+    pending: enrollments.filter((e) => e.status === "REQUESTED").length,
+    rejected: enrollments.filter((e) => e.status === "REJECTED").length,
   };
 
+  if (loading) {
+    return (
+      <Layout userName="Student">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading enrollments...</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout userName="Student">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          {error}
+          <button
+            onClick={loadEnrollments}
+            className="ml-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
-    <Layout userName={currentUser.name}>
+    <Layout userName="Student">
       <div className="space-y-6">
         {/* Header */}
         <div>

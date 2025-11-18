@@ -1,30 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
+import { fetchApprovedColleges } from "../../services/publicService";
 
 export default function StudentLogin() {
   const nav = useNavigate();
   const location = useLocation();
   const { login, logout } = useAuth();
 
-  // Mock list (pretend fetched from backend)
-  const colleges = [
-    "Tech University",
-    "Global Institute",
-    "Bright Future College",
-  ];
-
+  const [colleges, setColleges] = useState([]);
   const [selectedCollege, setSelectedCollege] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingColleges, setLoadingColleges] = useState(true);
+
+  useEffect(() => {
+    loadColleges();
+  }, []);
+
+  const loadColleges = async () => {
+    try {
+      setLoadingColleges(true);
+      const data = await fetchApprovedColleges();
+      setColleges(data || []);
+    } catch (error) {
+      console.error("Error loading colleges:", error);
+      setError("Failed to load colleges. Please refresh the page.");
+    } finally {
+      setLoadingColleges(false);
+    }
+  };
 
   const handleCollegeSelect = (e) => {
-    const college = e.target.value;
-    setSelectedCollege(college);
+    const collegeId = e.target.value;
+    setSelectedCollege(collegeId);
 
-    if (college && !colleges.includes(college)) {
+    if (collegeId === "NotListed") {
       setError("❌ College not registered. Please contact your admin.");
     } else {
       setError("");
@@ -34,7 +47,7 @@ export default function StudentLogin() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!selectedCollege) return setError("Please select your college first.");
-    if (!colleges.includes(selectedCollege))
+    if (selectedCollege === "NotListed")
       return setError("College not registered.");
     if (!email || !password) return setError("Please fill all fields.");
     setError("");
@@ -49,10 +62,11 @@ export default function StudentLogin() {
         return;
       }
 
-  const target = location.state?.from?.pathname || "/student/dashboard";
-  nav(target, { replace: true });
+      const target = location.state?.from?.pathname || "/student/dashboard";
+      nav(target, { replace: true });
     } catch (err) {
-      const message = err?.response?.data?.message || err.message || "Login failed";
+      const message =
+        err?.response?.data?.message || err.message || "Login failed";
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -83,12 +97,15 @@ export default function StudentLogin() {
         <select
           value={selectedCollege}
           onChange={handleCollegeSelect}
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-6 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+          disabled={loadingColleges}
+          className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-6 focus:ring-2 focus:ring-indigo-400 focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed"
         >
-          <option value="">-- Choose College --</option>
-          {colleges.map((clg) => (
-            <option key={clg} value={clg}>
-              {clg}
+          <option value="">
+            {loadingColleges ? "Loading colleges..." : "-- Choose College --"}
+          </option>
+          {colleges.map((college) => (
+            <option key={college.collegeId} value={college.collegeId}>
+              {college.collegeName}
             </option>
           ))}
           <option value="NotListed">My College is not listed</option>
@@ -127,7 +144,12 @@ export default function StudentLogin() {
               <span
                 onClick={() =>
                   nav("/student/register", {
-                    state: { college: selectedCollege },
+                    state: {
+                      college: selectedCollege,
+                      collegeName: colleges.find(
+                        (c) => c.collegeId === parseInt(selectedCollege)
+                      )?.collegeName,
+                    },
                   })
                 }
                 className="text-indigo-600 font-semibold cursor-pointer hover:underline"

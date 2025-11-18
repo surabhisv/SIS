@@ -32,10 +32,11 @@ export default function AddCourse() {
     try {
       setLoadingDepts(true);
       const depts = await fetchDepartments();
-      setDepartments(depts || []);
+      setDepartments(Array.isArray(depts) ? depts : []);
     } catch (error) {
       console.error("Error loading departments:", error);
       setApiError("Failed to load departments. Please refresh the page.");
+      setDepartments([]);
     } finally {
       setLoadingDepts(false);
     }
@@ -200,11 +201,12 @@ export default function AddCourse() {
                         ? "Loading departments..."
                         : "Select Department"}
                     </option>
-                    {departments.map((dept) => (
-                      <option key={dept.deptId} value={dept.deptId}>
-                        {dept.deptName}
-                      </option>
-                    ))}
+                    {Array.isArray(departments) &&
+                      departments.map((dept) => (
+                        <option key={dept.deptId} value={dept.deptId}>
+                          {dept.deptName}
+                        </option>
+                      ))}
                   </select>
                   {errors.deptId && (
                     <p className="text-red-500 text-xs mt-1">{errors.deptId}</p>

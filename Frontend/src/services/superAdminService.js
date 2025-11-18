@@ -38,8 +38,7 @@ export const rejectCollegeRequest = async (requestId) => {
 /** DELETE APPROVED COLLEGE */
 export const deleteCollege = async (collegeId) => {
   const response = await apiClient.delete(
-    `/api/v1/superadmin/college/${collegeId}`,
-    { headers: getAuthHeader() }
+    `/api/v1/superadmin/college/${collegeId}`
   );
   return response.data;
 };
@@ -57,5 +56,5 @@ export default {
   approveCollegeRequest,
   rejectCollegeRequest,
   deleteCollege,
-  fetchAllColleges,   // ✅ FIXED — now exported
+  fetchAllColleges, // ✅ FIXED — now exported
 };
