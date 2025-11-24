@@ -53,11 +53,18 @@ export default function ManageCourses() {
           c.courseCode?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
+if (selectedDepartment !== "all") {
+  const dept = departments.find(
+    (d) => d.deptId === Number(selectedDepartment)
+  );
 
-    if (selectedDepartment !== "all") {
-      const deptId = parseInt(selectedDepartment);
-      filtered = filtered.filter((c) => c.deptId === deptId);
-    }
+  if (dept) {
+    filtered = filtered.filter(
+      (c) => c.departmentName === dept.deptName
+    );
+  }
+}
+
 
     setFilteredCourses(filtered);
   }, [courses, searchTerm, selectedDepartment]);
