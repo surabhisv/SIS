@@ -198,13 +198,12 @@ const ManageColleges = () => {
 
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          r.status === "APPROVED"
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${r.status === "APPROVED"
                             ? "bg-green-100 text-green-800"
                             : r.status === "REJECTED"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                              ? "bg-red-100 text-red-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
                       >
                         {r.status}
                       </span>
@@ -238,16 +237,11 @@ const ManageColleges = () => {
 
                       {/* APPROVED */}
                       {r.status === "APPROVED" && (
-                        <button
-                          onClick={() => handleDeleteCollege(r.collegeId)}
-                          disabled={actionLoading !== null}
-                          className="bg-gray-600 text-white text-sm px-3 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {actionLoading === `delete-${r.collegeId}`
-                            ? "Deleting..."
-                            : "Delete College"}
-                        </button>
+                        <span className="text-gray-500 italic text-sm">
+                          (No Actions Available)
+                        </span>
                       )}
+
 
                       {/* REJECTED */}
                       {r.status === "REJECTED" && (
